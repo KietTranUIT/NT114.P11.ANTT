@@ -1,11 +1,11 @@
-require('dotenv').config({ path: './../../.env' });
+require('dotenv').config({ path: './../../.env'})
 
 module.exports = {
-    port: process.env.USER_SERVICE_PORT || 9001,
+    port: process.env.USER_SERVICE_PORT || 9002,
     database: {
-        user: `${process.env.POSTGRES_USER}`,
-        password: `${process.env.POSTGRES_PASSWORD}`,
-        dbname: `${process.env.POSTGRES_DBNAME}`,
-        host: `${process.env.POSTGRES_HOST}`
+        user: `${process.env.DB_USER}`,
+        password: `${process.env.DB_PASSWORD}`,
+        dbname: `${process.env.DB_NAME}`,
+        host: `${process.env.DB_HOST}`
     }
 }
