@@ -1,2 +1,3 @@
 src/apigateway/node_modules/
+src/userservice/node_modules/
 .env
