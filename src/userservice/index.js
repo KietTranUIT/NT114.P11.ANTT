@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const keys = require('./config/key');
 const { port } = keys;
 const routerV1 = require('./api/v1/routes');
+const db = require('./config/db');
 
 const apiVersions = {
     "1.0.0": "/v1",
@@ -32,6 +33,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(redirectVersion);
 app.use('/v1', routerV1);
+
+// connect to database
+db.connect(db.sequelize);
 
 app.listen(port, () => {
     console.log(
