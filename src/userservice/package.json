@@ -17,11 +17,15 @@
   },
   "homepage": "https://github.com/KietTranUIT/NT114.P11.ANTT#readme",
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bull": "^4.16.2",
     "chalk": "^4.1.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "nodemailer": "^6.9.15",
     "pg": "^8.12.0",
     "pg-hstore": "^2.3.4",
+    "redis": "^4.7.0",
     "sequelize": "^6.37.3"
   }
 }

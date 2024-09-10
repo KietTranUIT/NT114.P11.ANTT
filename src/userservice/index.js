@@ -6,6 +6,7 @@ const keys = require('./config/key');
 const { port } = keys;
 const routerV1 = require('./api/v1/routes');
 const db = require('./config/db');
+const rd = require('./config/redis');
 
 const apiVersions = {
     "1.0.0": "/v1",
@@ -36,6 +37,9 @@ app.use('/v1', routerV1);
 
 // connect to database
 db.connect(db.sequelize);
+
+// connect to redis
+rd.connectRedis(rd.redisClient);
 
 app.listen(port, () => {
     console.log(
