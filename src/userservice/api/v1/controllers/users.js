@@ -183,8 +183,8 @@ module.exports.login = async (req, res) => {
             roleId: user.roleId
         }
 
-        const accessToken = generateJWT(payload, '1h') // Access token expires in 1 hour
-        const refreshToken = generateJWT(payload, '24h') // Refresh token expires in 24 hours
+        const accessToken = generateJWT(payload, '1h', 'access_token') // Access token expires in 1 hour
+        const refreshToken = generateJWT(payload, '24h', 'refresh_token') // Refresh token expires in 24 hours
 
         const resToken = `access_token=${accessToken};refresh_token=${refreshToken}`
         res.setHeader('Authorization', resToken)

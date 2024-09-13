@@ -14,7 +14,7 @@ module.exports.authenticate = async (req, res, next) => {
             throw new Error('Bearer in authorization header not found.')
         }
 
-        const user = verifyJWT(auth[1])
+        const user = verifyJWT(auth[1], 'access_token')
         req.user = user
         next()   
     } catch (error) {

@@ -1,21 +1,25 @@
 const jwt = require('jsonwebtoken');
 const keys = require('./../../../config/key');
 
-const secretKey = keys.jwtSecretKey
+const { accessSecretKey, refreshSecretKey } = keys.jwtSecretKey
 
 // Generate a jwt token
-module.exports.generateJWT = (payload, expiresIn) => {
+module.exports.generateJWT = (payload, expiresIn, type) => {
     const options = {
         expiresIn
     }
 
-    const token = jwt.sign(payload, secretKey, options)
-    return token
+    if (type === 'access_token') {
+        return jwt.sign(payload, accessSecretKey, options)
+    }
+
+    return jwt.sign(payload, refreshSecretKey, options)
 }
 
 // Verify a jwt token
-module.exports.verifyJWT = token => {
-    const user = jwt.verify(token, secretKey)
-    console.log(user)
-    return user
+module.exports.verifyJWT = (token, type) => {
+    if (type === 'access_token') {
+        return jwt.verify(token, accessSecretKey)
+    }
+    return jwt.verify(token, refreshSecretKey)
 }

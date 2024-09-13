@@ -16,5 +16,8 @@ module.exports = {
         sender: `${process.env.SENDER}`,
         sender_password: `${process.env.SENDER_PASSWORD}`,
     },
-    jwtSecretKey: `${process.env.JWT_SECRET_KEY}`,
+    jwtSecretKey: {
+        accessSecretKey: `${process.env.ACCESS_SECRET_KEY}`,
+        refreshSecretKey: `${process.env.REFRESH_SECRET_KEY}`,
+    }
 }
