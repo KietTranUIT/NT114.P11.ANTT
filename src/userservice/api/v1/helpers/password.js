@@ -12,3 +12,10 @@ module.exports.generateJWT = (payload, expiresIn) => {
     const token = jwt.sign(payload, secretKey, options)
     return token
 }
+
+// Verify a jwt token
+module.exports.verifyJWT = token => {
+    const user = jwt.verify(token, secretKey)
+    console.log(user)
+    return user
+}

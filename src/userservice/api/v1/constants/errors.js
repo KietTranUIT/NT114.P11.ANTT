@@ -22,5 +22,9 @@ module.exports = {
     loginError: {
         code: 15,
         title: "Login failed"
+    },
+    authenticateError: {
+        code: 16,
+        title: "Authenticate failed"
     }
 }
