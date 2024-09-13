@@ -8,6 +8,7 @@ const { validateBody, validateEmail, validatePassword } = require('../helpers/va
 const keys = require('../../../config/key');
 const { ROLES } = require('../constants');
 const backgroundJobs = require('../services/job');
+const { generateJWT } = require('../helpers/password');
 
 module.exports.defaultRoute = async (req, res) => {
     const users = await User.findAll({include: Role});
@@ -106,6 +107,95 @@ module.exports.register = async (req, res) => {
                 type: 'users',
                 id: user.id,
                 attributes: user
+            }
+        })
+    } catch(error) {
+        res.status(500).json({
+            errors: {
+                code: codeErrors.internalError.code,
+                title: codeErrors.internalError.title,
+                source: 'server',
+                detail: error.message
+            }
+        })
+    }
+}
+
+// Login handler
+module.exports.login = async (req, res) => {
+    // Require two parameters are email and password
+    const check = validateBody(req, REQUIRED_PARAMETERS.login)
+    if (!check.status) {
+        res.status(400).json({errors: check.errors})
+        return
+    }
+
+    let { email, password } = check.data.attributes
+
+    // Check if email format is correct
+    if (!validateEmail(email)) {
+        res.status(422).json({
+            errors: {
+                code: codeErrors.validationError.code,
+                title: codeErrors.validationError.title,
+                source: '/data/attributes/email',
+                detail: 'Email format is incorrect.'
+            }
+        })
+        return
+    }
+    try {
+        let user = await User.findOne({
+            where: {
+                email
+            }
+        })
+
+        // Check if user is exists
+        if (!user) {
+            res.status(422).json({
+                errors: [{
+                    code: codeErrors.loginError.code,
+                    title: codeErrors.loginError.title,
+                    source: '/data/attributes/email',
+                    detail: 'User is not exists.'
+                }]
+            })
+            return
+        }
+        
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            res.status(422).json({
+                errors: {
+                    code: codeErrors.loginError.code,
+                    title: codeErrors.loginError.title,
+                    source: '/data/attributes/password',
+                    detail: 'Password is incorrect.'
+                }
+            })
+            return
+        }
+
+        const payload = {
+            id: user.id,
+            email: user.email,
+            roleId: user.roleId
+        }
+
+        const accessToken = generateJWT(payload, '1h') // Access token expires in 1 hour
+        const refreshToken = generateJWT(payload, '24h') // Refresh token expires in 24 hours
+
+        const resToken = `access_token=${accessToken};refresh_token=${refreshToken}`
+        res.setHeader('Authorization', resToken)
+        user.password = undefined
+        res.status(200).json({
+            data: {
+                type: 'users',
+                id: user.id,
+                attributes: {
+                    user
+                }
             }
         })
     } catch(error) {

@@ -15,5 +15,6 @@ module.exports = {
     mail: {
         sender: `${process.env.SENDER}`,
         sender_password: `${process.env.SENDER_PASSWORD}`,
-    }
+    },
+    jwtSecretKey: `${process.env.JWT_SECRET_KEY}`,
 }

@@ -10,5 +10,17 @@ module.exports = {
     missingError: {
         code: 12,
         title: "Missing required field"
+    },
+    validationError: {
+        code: 13,
+        title: "Validation failed"
+    },
+    notFoundError: {
+        code: 14,
+        title: "Resource not found"
+    },
+    loginError: {
+        code: 15,
+        title: "Login failed"
     }
 }

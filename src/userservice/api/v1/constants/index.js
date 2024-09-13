@@ -6,6 +6,7 @@ module.exports.ACCOUNT_STATUS = {
 
 module.exports.REQUIRED_PARAMETERS = {
     register: ['email', 'fullName', 'password', 'confirmPassword'],
+    login: ['email', 'password']
 }
 
 module.exports.ROLES = {
