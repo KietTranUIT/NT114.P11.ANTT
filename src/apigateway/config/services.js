@@ -1,7 +1,17 @@
-module.exports = [
+module.exports.services = [
     {
         route: "/users",
         target: "http://localhost:9001/",
-        auth: false,
+        paths: [
+            {
+                path: "/",
+                auth: ["GET"]
+            }
+        ]
     }
 ]
+
+module.exports.serviceIdentity = {
+    "/users": 0,
+    "/products": 1
+}

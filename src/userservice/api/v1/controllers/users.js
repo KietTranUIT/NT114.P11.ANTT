@@ -11,8 +11,8 @@ const backgroundJobs = require('../services/job');
 const { generateJWT } = require('../helpers/password');
 
 module.exports.defaultRoute = async (req, res) => {
-    const users = await User.findAll({include: Role});
-    res.status(200).json(users)
+    //const users = await User.findAll({include: Role});
+    res.status(200).json("Message Hello")
 }
 
 // Register account for customer

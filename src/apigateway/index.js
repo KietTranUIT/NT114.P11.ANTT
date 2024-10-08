@@ -5,9 +5,10 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const keys = require('./config/key');
 const port = keys.port
-const services = require('./config/services');
+const {services} = require('./config/services');
+const { authenticate } = require('./middleware');
 
-services.forEach(({route, target}) => {
+services.forEach(({route, target, route_auth}) => {
     const proxyOptions = {
         target,
         changeOrigin: true,
@@ -16,8 +17,13 @@ services.forEach(({route, target}) => {
         },
     }
 
-    // apply proxy middleware
-    app.use(route, createProxyMiddleware(proxyOptions))
+    // if (!auth) {
+    //     // apply proxy middleware
+    //     app.use(route, createProxyMiddleware(proxyOptions))
+    // } else {
+    //     app.use(route, authenticate, createProxyMiddleware(proxyOptions))
+    // }
+    app.use(route, authenticate, createProxyMiddleware(proxyOptions))
 })
 
 app.listen(port, () => {

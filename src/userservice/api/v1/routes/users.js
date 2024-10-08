@@ -4,7 +4,7 @@ const router = express.Router();
 const { defaultRoute, register, login } = require('./../controllers/users');
 const { authenticate } = require('./../middlewares');
 
-router.get('/', authenticate, defaultRoute)
+router.get('/', defaultRoute)
 router.post('/register', register)
 router.post('/login', login)
 
