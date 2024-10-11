@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { login, getToken } from './../helpers';
 import Cookies from "js-cookie";
+import { useDispatch } from 'react-redux';
+import { useNavigate } from "react-router-dom";
 
 function Auth() {
     const userInfos = {
@@ -16,6 +18,9 @@ function Auth() {
     const [user, setUser] = useState(userInfos)
     const [notify, setNotify] = useState(notifications)
     const [loading, setLoading] = useState(false)
+
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     // Update user state when user enter text in input
     const handleInputChanges = (event) => {
@@ -34,6 +39,11 @@ function Auth() {
         }, 4000)
     }
 
+    // Close notification
+    const closeNotification = () => {
+        setNotify({...notify, visible: false})
+    }
+
     // Send login request
     const handleSubmit = async (event) => {
         event.preventDefault()
@@ -41,7 +51,7 @@ function Auth() {
         setLoading(true)
         try {
             const response = await login(user)
-            if (data instanceof Error) {
+            if (response instanceof Error) {
                 showNotification('Email hoặc mật khẩu không chính xác!', 'error')
                 throw new Error('')
             }
@@ -58,9 +68,13 @@ function Auth() {
                 expires: 7,
                 samesite: 'Strict'
             })
-            showNotification('Đăng nhập thành công!', 'success')
+            localStorage.setItem('user', JSON.stringify(response.data.data.attributes))
 
-            throw new Error('')
+            dispatch({type: 'LOGIN', payload: JSON.parse(localStorage.getItem('user'))})
+
+            showNotification('Đăng nhập thành công!', 'success')
+            setLoading(true)
+            navigate("/")
         } catch {
             setLoading(false)
         }
@@ -84,7 +98,7 @@ function Auth() {
         </div>
         { notify.visible && (
             <div id="alert" class={`alert ${notify.type}`}>
-                <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                <span class="closebtn" onClick={closeNotification}>&times;</span>
                 <strong>{notify.message}</strong>
             </div>
         )}

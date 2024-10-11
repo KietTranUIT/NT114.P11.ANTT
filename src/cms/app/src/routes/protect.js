@@ -3,7 +3,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 // Redirect request if user haven't authenticated
 const ProtectedRoute = () => {
-    const { user } = useSelector((state) => ({...state}))
+    const user = useSelector((state) => ({...state}))
 
     return user ? <Outlet /> : <Navigate to="/auth" />
 }

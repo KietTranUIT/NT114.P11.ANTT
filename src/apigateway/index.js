@@ -10,7 +10,8 @@ const {services} = require('./config/services');
 const { authenticate } = require('./middleware');
 
 app.use(cors({
-    origin: 'http://localhost:9002'
+    origin: 'http://localhost:9002',
+    exposedHeaders: ['Authorization'],
 }));
 
 services.forEach(({route, target}) => {

@@ -10,7 +10,7 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/auth" exact element={<Auth/>} />
-        <Route >
+        <Route element={ <ProtectedRoute />}>
           <Route path="/" element={ <Dashboard /> } />
         </Route>
         <Route path="*" element={ <NotFound />} />

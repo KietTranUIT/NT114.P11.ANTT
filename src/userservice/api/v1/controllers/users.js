@@ -194,7 +194,7 @@ module.exports.login = async (req, res) => {
                 type: 'users',
                 id: user.id,
                 attributes: {
-                    user
+                    ...user.dataValues
                 }
             }
         })

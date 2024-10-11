@@ -13,5 +13,5 @@ module.exports.services = [
 
 module.exports.serviceIdentity = {
     "/users": 0,
-    "/products": 1
+    "/admin": 1
 }
