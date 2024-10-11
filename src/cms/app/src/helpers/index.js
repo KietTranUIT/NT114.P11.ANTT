@@ -12,3 +12,15 @@ export const login = async (user) => {
         return error
     }
 }
+
+// Split access token and refresh token in response header
+export const getToken = async (authorization) => {
+    let format = authorization.split(";")
+
+    let accessToken = format[0].split("=")
+    let refreshToken = format[1].split("=")
+    return {
+        accessToken: accessToken[1],
+        refreshToken: refreshToken[1]
+    }
+}

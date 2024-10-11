@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { login } from './../helpers';
+import { login, getToken } from './../helpers';
 import Cookies from "js-cookie";
 
 function Auth() {
@@ -45,10 +45,20 @@ function Auth() {
                 showNotification('Email hoặc mật khẩu không chính xác!', 'error')
                 throw new Error('')
             }
-            showNotification('Đăng nhập thành công!', 'success')
 
             // Save token in authorization
-            console.log(response)
+            const authorization = response.headers['authorization']
+            const token = getToken(authorization)
+            Cookies.set("access_token", token.accessToken, { 
+                expires: 1 / 24,
+                sameSite: 'Strict'
+            })
+            Cookies.set("refresh_token", token.refreshToken, {
+                path: "/users/refresh",
+                expires: 7,
+                samesite: 'Strict'
+            })
+            showNotification('Đăng nhập thành công!', 'success')
 
             throw new Error('')
         } catch {
