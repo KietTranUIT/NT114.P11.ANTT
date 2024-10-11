@@ -1,3 +1,5 @@
 src/apigateway/node_modules/
 src/userservice/node_modules/
+src/cms/node_modules/
+testhtml/
 .env

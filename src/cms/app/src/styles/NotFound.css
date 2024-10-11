@@ -1,0 +1,52 @@
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+.notfound-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    background-color: #ffcc80; /* Màu nền cam nhạt */
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .notfound-content {
+    text-align: center;
+    color: #ff6f00; /* Màu cam đậm */
+  }
+  
+  .notfound-content h1 {
+    font-size: 10rem;
+    margin: 0;
+    color: #ff6f00; /* Màu cam đậm */
+  }
+  
+  .notfound-content h2 {
+    font-size: 2.5rem;
+    margin: 0.5rem 0;
+  }
+  
+  .notfound-content p {
+    font-size: 1.2rem;
+    color: #333;
+    margin: 1.5rem 0;
+  }
+  
+  .back-home-button {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 1rem;
+    background-color: #ff6f00; /* Màu cam đậm */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+  }
+  
+  .back-home-button:hover {
+    background-color: #e65100; /* Màu cam tối hơn khi hover */
+  }
+  
