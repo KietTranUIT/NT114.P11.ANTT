@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { login } from './../helpers'
+import { login } from './../helpers';
+import Cookies from "js-cookie";
 
 function Auth() {
     const userInfos = {
@@ -39,12 +40,16 @@ function Auth() {
 
         setLoading(true)
         try {
-            const data = await login(user)
+            const response = await login(user)
             if (data instanceof Error) {
                 showNotification('Email hoặc mật khẩu không chính xác!', 'error')
                 throw new Error('')
             }
             showNotification('Đăng nhập thành công!', 'success')
+
+            // Save token in authorization
+            console.log(response)
+
             throw new Error('')
         } catch {
             setLoading(false)
