@@ -1,0 +1,231 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    height: 100%;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #fff;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: #555;
+    color: rgb(245, 167, 49);
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    background-color: #ffffff;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f0e9dd;
+    padding: 15px;
+    color: #363636;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.card:nth-child(1) {
+    background-color: #5895d6; /* Màu xanh dương cho thẻ 1 */
+}
+
+.card:nth-child(2) {
+    background-color: #368a4a; /* Màu xanh lá cho thẻ 2 */
+}
+
+.card:nth-child(3) {
+    background-color: #f0c033; /* Màu vàng cho thẻ 3 */
+}
+
+.card:nth-child(4) {
+    background-color: #dd2e3f; /* Màu đỏ cho thẻ 4 */
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(235, 45, 93, 0.5);
+}
+
+
+
+
+
+
+
+
+.dashboard-overview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    gap: 20px; /* Khoảng cách giữa các thẻ */
+}
+
+.card {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statistic {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.time-period {
+    color: #111111;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.legend {
+    margin-top: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-item .color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    border-radius: 50%;
+}
+
+.color.blue { background-color: #007bff; }
+.color.light-blue { background-color: #6ec1e4; }
+.color.grey { background-color: #ccc; }
+
+.percentage-change {
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    border-radius: 5px;
+    color: white;
+}
+
+.percentage-change.negative {
+    background-color: #ffc107; /* Màu vàng */
+}
+
+.percentage-change.positive {
+    background-color: #28a745; /* Màu xanh lá */
+}
+
+.chart {
+    height: 100px;
+    margin-bottom: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.orders tr {
+    transition: background-color 0.3s;
+}
+
+.orders tr:hover {
+    background-color: #ebd1e9;
+}
+
+.orders table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.orders th, .orders td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+.orders th {
+    background-color: #797876;
+    color: #fff;
+}
+
+.SaleOverview h2 {
+    font-size: 1.5rem; /* Cỡ chữ của tiêu đề */
+    font-weight: bold;
+    margin-bottom: 20px; /* Khoảng cách dưới tiêu đề */
+    margin-top: 20px;
+    text-align: left;  /* Canh giữa tiêu đề */
+}
+
+.SaleOverview {
+    height: 600px;
+    width: 100%;
+    
+}
+.SaleOverview canvas {
+    width: 100;
+    height: 400px;
+    margin: 0 auto;  /* Canh giữa canvas */
+}
+
+
+

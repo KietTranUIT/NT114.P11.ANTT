@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin</title>
+    <link rel="stylesheet" href="css/app.css">
+    <script src="js/app.js" defer></script>
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">Products</a></li>
+                <li><a href="#">Orders</a></li>
+                <li><a href="#">Customers</a></li>
+                <li><a href="#">Reports</a></li>
+                <li><a href="#">Settings</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Navbar -->
+            <header class="navbar">
+                <h1>Ecommerce Dashboard</h1>
+                <div class="navbar-right">
+                    <span>Welcome, Admin</span>
+                    <button>Logout</button>
+                </div>
+            </header>
+
+            <section class="dashboard-overview">
+                <div class="card total-orders">
+                    <div class="card-header">
+                        <h3>Total orders</h3>
+                        <span class="percentage-change negative">-6.8%</span>
+                    </div>
+                    <p class="statistic">16,247</p>
+                    <p class="time-period">Last 7 days</p>
+                    <div class="chart" id="chart-orders"></div>
+                    <div class="legend">
+                        <span class="legend-item">
+                            <span class="color blue"></span> Completed (52%)
+                        </span>
+                        <span class="legend-item">
+                            <span class="color light-blue"></span> Pending payment (48%)
+                        </span>
+                    </div>
+                </div>
+            
+                <div class="card new-customers">
+                    <div class="card-header">
+                        <h3>New customers</h3>
+                        <span class="percentage-change positive">+26.5%</span>
+                    </div>
+                    <p class="statistic">356</p>
+                    <p class="time-period">Last 7 days</p>
+                    <div class="chart" id="chart-customers"></div>
+                </div>
+            
+                <div class="card top-coupons">
+                    <h3>Top coupons</h3>
+                    <p class="time-period">Last 7 days</p>
+                    <div class="chart" id="chart-coupons"></div>
+                    <div class="legend">
+                        <span class="legend-item">
+                            <span class="color blue"></span> Percentage discount (72%)
+                        </span>
+                        <span class="legend-item">
+                            <span class="color light-blue"></span> Fixed card discount (18%)
+                        </span>
+                        <span class="legend-item">
+                            <span class="color grey"></span> Fixed product discount (10%)
+                        </span>
+                    </div>
+                </div>
+            
+                <div class="card paying-non-paying">
+                    <h3>Paying vs Non-paying</h3>
+                    <p class="time-period">Last 7 days</p>
+                    <div class="chart" id="chart-paying"></div>
+                    <div class="legend">
+                        <span class="legend-item">
+                            <span class="color blue"></span> Paying customer (30%)
+                        </span>
+                        <span class="legend-item">
+                            <span class="color light-blue"></span> Non-paying customer (70%)
+                        </span>
+                    </div>
+                </div>
+            </section>
+            
+
+
+
+
+
+
+            <!-- Orders Table -->
+            <section class="orders">
+                <h2>Recent Orders</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Tan Hung</td>
+                            <td>$120</td>
+                            <td>Shipped</td>
+                            <td>10/08/2024</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Kiet Tran</td>
+                            <td>$80</td>
+                            <td>Processing</td>
+                            <td>10/07/2024</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Hoang hacker</td>
+                            <td>$120</td>
+                            <td>Shipped</td>
+                            <td>10/08/2024</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>John wick</td>
+                            <td>$120</td>
+                            <td>Shipped</td>
+                            <td>10/08/2024</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>Elon Musk</td>
+                            <td>$120</td>
+                            <td>Shipped</td>
+                            <td>10/08/2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Sales Overview -->
+            <section class="SaleOverview">
+                <h2>Sales Overview</h2>
+                <canvas id="salesChart"></canvas>
+            </section>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+</html>
