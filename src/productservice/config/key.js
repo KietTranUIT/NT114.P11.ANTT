@@ -8,4 +8,9 @@ module.exports = {
         dbname: `${process.env.DB_NAME}`,
         host: `${process.env.DB_HOST}`
     },
+    cloud: {
+        cloud_name: `${process.env.CLOUD_NAME}`,
+        api_key: `${process.env.CLOUD_API_KEY}`,
+        api_secret: `${process.env.CLOUD_API_SECRET}`
+    }
 }
