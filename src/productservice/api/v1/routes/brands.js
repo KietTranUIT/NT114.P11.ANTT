@@ -4,7 +4,7 @@ const router = express.Router();
 const brands = require('./../controllers/brands');
 const fileMiddleware = require('../middleware/fileUploads');
 
-router.get('/', brands.getBrands)
+router.get('/', brands.getAll)
 router.post('/brands', fileMiddleware.uploadSingleFile('image'), brands.create)
 
 module.exports = router;

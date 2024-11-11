@@ -6,9 +6,13 @@ const slugify = require('slugify');
 
 
 // Get brands pagination
-module.exports.getBrands = async (req, res) => {
+module.exports.getAll = async (req, res) => {
     try {
-        const { page = 0, limit = 10 } = req.query
+        let { page = 1, limit = 10 } = req.query
+        page = parseInt(page, 10)
+        limit = parseInt(limit, 10)
+        if (page === NaN || page <= 0) page = 1
+        if (limit === NaN || limit < 0) limit = 0
 
         // get brands
         const brands = await Brand.findAll({
@@ -20,11 +24,9 @@ module.exports.getBrands = async (req, res) => {
         })
         let data = []
         for (let i = 0; i < brands.length; i++) {
-            const {id, ...attributes } = brands[i]
             let brand = {
                 type: 'brand',
-                id,
-                attributes,
+                attributes: brands[i]
             }
             data.push(brand)
         }
@@ -33,13 +35,7 @@ module.exports.getBrands = async (req, res) => {
             data: data
         })
     } catch (error) {
-        res.status(500).json({
-            errors: {
-                title: 'Internal Server Error',
-                source: 'product-service/server',
-                detail: error.message
-            }
-        })
+        res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }
 

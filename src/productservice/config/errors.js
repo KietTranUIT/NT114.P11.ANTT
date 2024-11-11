@@ -3,6 +3,7 @@ const errorCodes = {
     invalidFile: 102,  // File type is not accepted
     internalError: 103, // Internal error
     duplicateEntry: 104, // Duplicate record in database
+    invalidData: 105, // Invalid data in request body
 }
 
 module.exports = errorCodes;
