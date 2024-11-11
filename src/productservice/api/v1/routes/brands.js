@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const { getBrands } = require('./../controllers/brands');
+const brands = require('./../controllers/brands');
+const fileMiddleware = require('../middleware/fileUploads');
 
-router.get('/', getBrands)
+router.get('/', brands.getBrands)
+router.post('/brands', fileMiddleware.uploadSingleFile('image'), brands.create)
 
 module.exports = router;
 

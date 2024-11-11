@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
 
-var Brand = sequelize.define('users', {
+var Brand = sequelize.define('brands', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -16,10 +16,14 @@ var Brand = sequelize.define('users', {
     description: {
         type: DataTypes.STRING,
     },
-    logo: {
+    logo_url: {
         type: DataTypes.STRING,
         defaultValue: 'logo.jpg'
     },
+    slug: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    }
 }, {
     underscored: true,
     timestamp: true
