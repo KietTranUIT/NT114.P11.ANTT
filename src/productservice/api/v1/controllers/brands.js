@@ -3,6 +3,7 @@ const ErrorObj = require('../models/errors');
 const { checkFileType, uploadFile, resizeImage } = require('../help/upload');
 const errorCodes = require('./../../../config/errors');
 const slugify = require('slugify');
+const help = require('./../help');
 
 
 // Get brands pagination
@@ -111,6 +112,53 @@ module.exports.create = async (req, res) => {
                 attributes: brand
             }
         })
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+// Update a brand
+module.exports.update = async (req, res) => {
+    try {
+        const idBrand = req.params.id
+        // Validate brand id
+        if (isNaN(idBrand)) {
+            const err = new ErrorObj(errorCodes.invalidData, 422, 'Invalid data', 'invalid brand id', { parameter: '/id' })
+            return res.status(422).json({ errors: err })
+        }
+        const updateBrand = help.strongParameters(req.body, ['name', 'description', 'slug'])
+
+        // Check if name is duplicated
+        let brand
+        try {
+            // Update brand
+            let updateResult = await Brand.update(updateBrand, {
+                where: { id: idBrand },
+                returning: true,
+            })
+
+            // Brand not exists
+            if (updateResult[0] === 0) {
+                return res.status(204).send()
+            }
+            brand = updateResult[1]
+        } catch (err_db) {
+            if (err_db.name === 'SequelizeUniqueConstraintError') {
+                if (err_db.errors[0].path === 'slug') {
+                    err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate record', 'duplicate brand slug.', { pointer: '/slug' })
+                } else {
+                    err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate entry', 'duplicate brand name.', { pointer: '/name' })
+                }
+                return res.status(422).json({ errors: [err] })
+            }
+            throw err_db
+        }
+        
+
+        res.status(200).json({data: {
+            type: 'brand',
+            attributes: brand
+        }})
     } catch (error) {
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }

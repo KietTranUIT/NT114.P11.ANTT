@@ -4,6 +4,7 @@ const errorCodes = {
     internalError: 103, // Internal error
     duplicateEntry: 104, // Duplicate record in database
     invalidData: 105, // Invalid data in request body
+    notFound: 106 // Not found record in database
 }
 
 module.exports = errorCodes;
