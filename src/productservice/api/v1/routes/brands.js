@@ -7,6 +7,7 @@ const fileMiddleware = require('../middleware/fileUploads');
 router.get('/', brands.getAll)
 router.post('/brands', fileMiddleware.uploadSingleFile('image'), brands.create)
 router.put('/:id', brands.update)
+router.put('/:id/media', brands.uploadLogo)
 
 module.exports = router;
 

@@ -163,3 +163,55 @@ module.exports.update = async (req, res) => {
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }
+
+// Upload logo for a brand
+module.exports.uploadLogo = async (req, res) => {
+    try {
+        const idBrand = req.params.id
+        // Validate brand id
+        if (isNaN(idBrand)) {
+            const err = new ErrorObj(errorCodes.invalidData, 422, 'Invalid data', 'invalid brand id', { parameter: '/id' })
+            return res.status(422).json({ errors: err })
+        }
+
+        // Check if file type is image
+        if (!checkFileType(req.file, ['image'])) {
+            const error = new ErrorObj(
+                errorCodes.invalidFile,
+                415,
+                "Invalid file type",
+                "type of uploaded file is not accepted."
+            )
+            return res.status(415).json({
+                errors: [error]
+            })
+        }
+
+        // resize image
+        const buffer = await resizeImage(req.file.buffer, {width: 1000, length: 1000})
+
+        // Upload image to cloudinary
+        const uploadResult = await uploadFile(buffer)
+        if (uploadResult instanceof Error) {
+            throw uploadResult
+        }
+
+        // Update logo url
+        let updateResult = await Brand.update({
+            logo_url: uploadResult.secure_url
+        }, {
+            where: { id: idBrand },
+            returning: true,
+        })
+
+        if (updateResult[0] === 0) {
+            return res.status(204).send()
+        }
+        res.status(200).json({ data: {
+            type: 'brand',
+            attributes: updateResult[1]
+        }})
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
