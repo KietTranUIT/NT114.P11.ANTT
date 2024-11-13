@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link rel="stylesheet" href="/NT114.P11.ANTT/CMS/css/products.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <nav>
+            <span>Page 1 ></span>
+            <span>Page 2 ></span>
+            <span>Default</span>
+        </nav>
+        <h1>Products</h1>
+        <div class="filters">
+            <button>All (68817)</button>
+            <button>Published (70348)</button>
+            <button>Drafts (17)</button>
+            <button>On discount (810)</button>
+        </div>
+        <div class="search-filters">
+            <input type="text" placeholder="Search products">
+            <button>Category</button>
+            <button>Vendor</button>
+            <button>More filters</button>
+        </div>
+        <div class="actions">
+            <button>Export</button>
+            <button class="add-product">Add product</button>
+        </div>
+    </div>
+
+    <table class="product-table">
+        <thead>
+            <tr>
+                <th><input type="checkbox"></th>
+                <th>PRODUCT NAME</th>
+                <th>PRICE</th>
+                <th>CATEGORY</th>
+                <th>TAGS</th>
+                <th>VENDOR</th>
+                <th>PUBLISHED ON</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dòng mẫu sản phẩm -->
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                    <img src="product-image1.jpg" alt="Product">
+                    <span>Fitbit Sense Advanced Smartwatch with Tools for Heart Health...</span>
+                </td>
+                <td>$39</td>
+                <td>Plants</td>
+                <td>
+                    <span class="tag">HEALTH</span>
+                    <span class="tag">LIFESTYLE</span>
+                    <span class="tag">FITNESS</span>
+                </td>
+                <td>Blue Olive Plant sellers. Inc</td>
+                <td>Nov 12, 10:45 PM</td>
+            </tr>
+            <!-- Thêm các dòng sản phẩm khác vào đây -->
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
