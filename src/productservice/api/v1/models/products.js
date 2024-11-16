@@ -1,53 +1,61 @@
 const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
-const { ACCOUNT_STATUS } = require('../constants');
-const Role = require('./roles');
+const Brand = require('./brands');
+const Category = require('./categories');
 
-var User = sequelize.define('users', {
+var Product = sequelize.define('products', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
     },
-    email: {
+    title: {
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
     },
-    phoneNumber: {
+    description: {
+        type: DataTypes.STRING,
+    },
+    slug: {
         type: DataTypes.STRING,
         unique: true,
-    },
-    fullName: {
-        type: DataTypes.STRING,
         allowNull: false,
     },
-    dayOfBirth: {
-        type: DataTypes.DATE,
-    },
-    password: {
-        type: DataTypes.STRING,
-    },
-    token: {
-        type: DataTypes.STRING,
+    price: {
+        type: DataTypes.FLOAT,
     },
     status: {
-        type: DataTypes.ENUM([ACCOUNT_STATUS.Active, ACCOUNT_STATUS.Inactive, ACCOUNT_STATUS.Blocked]),
+        type: DataTypes.ENUM('active', 'inactive'),
         defaultValue: 'active'
     },
+    brandId: {
+        type: DataTypes.INTEGER,
+    },
+    categoryId: {
+        type: DataTypes.INTEGER,
+    },
+    discount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
+    dis_type: {
+        type: DataTypes.ENUM('fixed', 'percent'),
+    }
 }, {
     underscored: true,
     timestamp: true
 })
 
-Role.hasMany(User);
+Brand.hasMany(Product, {
+    foreignKey: 'brandId'
+});
+Product.belongsTo(Brand);
 
-User.belongsTo(Role, {
-    foreignKey: {
-        name: 'roleId',
-        type: DataTypes.INTEGER
-    }
-})
+Category.hasMany(Product, {
+    foreignKey: 'categoryId',
+});
+Product.belongsTo(Category);
 
 module.exports = User;
