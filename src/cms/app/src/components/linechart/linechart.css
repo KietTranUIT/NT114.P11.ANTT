@@ -1,0 +1,43 @@
+/* Biểu đồ trái bên dưới */
+.chart-container {
+    width: 100%;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 50px;
+}
+
+.chart-header h2 {
+    font-size: 24px;
+    margin: 0;
+    font-weight: bold;
+}
+
+.chart-header p {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+
+.date-selector {
+    float: right;
+    padding: 5px;
+    border: 1px solid #dad7d7;
+    border-radius: 5px;
+    background-color: #ffffff;
+    font-size: 14px;
+}
+
+.line-chart {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}

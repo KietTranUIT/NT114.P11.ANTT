@@ -29,3 +29,28 @@ export const getToken = async (authorization) => {
         refreshToken: refreshToken[1]
     }
 }
+
+// Generate array days
+export const generateDayArray = (dateRange) => {
+    // Extract month, start day, end day, and year from the string
+  const regex = /([A-Za-z]+) (\d+) - (\d+), (\d{4})/;
+  const match = dateRange.match(regex);
+
+  if (match) {
+    const month = match[1];
+    const startDay = parseInt(match[2], 10);
+    const endDay = parseInt(match[3], 10);
+
+    const dates = [];
+    
+    // Loop through the range and generate formatted dates
+    for (let day = startDay; day <= endDay; day++) {
+      const formattedDay = day < 10 ? `0${day}` : day; // Ensure day is 2 digits (e.g., "01", "02", ...)
+      dates.push(`${formattedDay} ${month}`);
+    }
+
+    return [match[0], dates];
+  } else {
+    return [];
+  }
+}

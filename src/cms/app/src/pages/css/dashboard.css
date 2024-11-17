@@ -1,0 +1,314 @@
+.Dashboard {
+    position: relative;
+    font-family: 'Arial', sans-serif;
+    background-color: #ffffff;
+    width: 100%;
+}
+
+.main-content {
+    position: absolute;
+    width: 85%;
+    right: 0;
+    padding-left: 50px;
+    padding-top: 30px;
+    background-color: #f5f7fa;
+    z-index: 2;
+}
+
+#chart-orders {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+}
+
+#chart-coupons {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+}
+
+#chart-customers {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+}
+
+#chart-payment {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+}
+
+.card:nth-child(1) {
+    background-color: #ffffff; /* Màu xanh dương cho thẻ 1 */
+}
+
+.card:nth-child(2) {
+    background-color: #ffffff; /* Màu xanh lá cho thẻ 2 */
+}
+
+.card:nth-child(3) {
+    background-color: #ffffff; /* Màu vàng cho thẻ 3 */
+}
+
+.card:nth-child(4) {
+    background-color: #ffffff; /* Màu đỏ cho thẻ 4 */
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(244, 151, 29, 0.5);
+}
+
+.main-content-header {
+    margin-bottom: 50px;
+}
+
+/* .dashboard-overview-left {
+    height: 1000px;
+    display: flex;
+    flex-direction: column;
+} */
+
+/* main-contain */
+.ecommerce-dashboard {
+    
+}
+
+/* dashboard-left */
+.item-dashboard-overview-left {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 50px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid black;
+    margin-bottom: 50px;
+}
+
+.item-dashboard-overview-left h2{
+    font-size: 20px;
+}
+.item-dashboard-overview-left p{
+    font-size: 12px;
+    font-weight: 200;
+    color:#70777a;
+}
+
+.item-new-orders{
+    display: flex;
+}
+.item-new-orders svg{
+    color: #2cca61;
+}
+
+.content{
+    padding-left: 10px;
+}
+.item-orders{
+    display: flex;
+}
+.item-orders svg{
+    color: rgb(37, 28, 16)
+}
+.item-products{
+    display: flex;
+}
+.item-products svg{
+    color: rgb(244, 130, 112);
+}
+
+/* dashboard-right */
+.dashboard-overview-right {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    gap: 20px; /* Khoảng cách giữa các thẻ */
+}
+
+.card {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statistic {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.time-period {
+    color: #111111;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.legend {
+    margin-top: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.legend-item .color {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    border-radius: 50%;
+}
+
+.color.blue { background-color: #007bff; }
+.color.light-blue { background-color: #6ec1e4; }
+.color.grey { background-color: #ccc; }
+
+.percentage-change {
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    border-radius: 5px;
+    color: white;
+}
+
+.percentage-change.negative {
+    background-color: #ffc107; /* Màu vàng */
+}
+
+.percentage-change.positive {
+    background-color: #28a745; /* Màu xanh lá */
+}
+
+/* Latest reviews */
+.reviews-container {
+    width: 100%;
+    margin-top: 30px;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.reviews-container h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.reviews-container p {
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.reviews-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.reviews-table th, .reviews-table td {
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.reviews-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    font-size: 16px;
+    
+}
+
+.reviews-table img.product-img {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.reviews-table td {
+    vertical-align: middle;
+}
+
+.reviews-table .status {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.reviews-table .status.approved {
+    background-color: #e0f7fa;
+    color: #00796b;
+    
+}
+
+.reviews-table .status.pending {
+    background-color: #fff3e0;
+    color: #e65100;
+    
+}
+
+.reviews-table td input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.rate{
+    text-align: center;
+    box-sizing: border-box;
+    color: #ece93c;;
+    font-size: 12.8px;
+    font-weight: 600;
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.SaleOverview h2 {
+    font-size: 1.5rem; /* Cỡ chữ của tiêu đề */
+    font-weight: bold;
+    margin-bottom: 20px; /* Khoảng cách dưới tiêu đề */
+    margin-top: 20px;
+    text-align: left;  /* Canh giữa tiêu đề */
+}
+
+.SaleOverview {
+    height: 600px;
+    width: 100%;
+    
+}
+.SaleOverview canvas {
+    width: 100;
+    height: 400px;
+    margin: 0 auto;  /* Canh giữa canvas */
+}
+
+
+
