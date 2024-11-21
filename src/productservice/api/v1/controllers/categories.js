@@ -38,6 +38,13 @@ module.exports.create = async (req, res) => {
             })
         }
 
+        if (parentId != null) {
+            if (!Number.isInteger(parentId) || parentId < 0) {
+                const err = new ErrorObj(errorCodes.invalidData, 422, "Invalid data", "parentId must be number and greater 0.")
+                return res.status(422).json({ errors: [err] })
+            }
+        }
+
         let category
         try {
             // Execute sql
