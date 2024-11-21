@@ -148,7 +148,7 @@ module.exports.update = async (req, res) => {
                     err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate record', 'duplicate brand slug.', { pointer: '/slug' })
                 } else {
                     err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate entry', 'duplicate brand name.', { pointer: '/name' })
-                }
+                }   
                 return res.status(422).json({ errors: [err] })
             }
             throw err_db

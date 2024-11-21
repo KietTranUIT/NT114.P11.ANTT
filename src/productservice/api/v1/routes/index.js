@@ -3,9 +3,11 @@ const router = express.Router();
 
 const userRoutes = require('./products');
 const brandRoutes = require('./brands');
+const categoryRoutes = require('./categories');
 
 router.use('/', userRoutes);
 router.use('/brand', brandRoutes);
+router.use('/categories', categoryRoutes);
 
 module.exports = router;
 

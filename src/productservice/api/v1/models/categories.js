@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
-const ProductAttribute = require('./attributes');
 
 var Category = sequelize.define('categories', {
     id: {
@@ -22,17 +21,16 @@ var Category = sequelize.define('categories', {
         unique: true,
         allowNull: false,
     },
-    parentId: {
-        type: DataTypes.INTEGER
-    }
 }, {
     underscored: true,
     timestamp: true
 })
 
-Category.hasMany(Category, {
+// Category.hasOne(Category, {
+//     foreignKey: 'parentId'
+// });
+Category.belongsTo(Category, {
     foreignKey: 'parentId'
 });
-Category.belongsTo(Category);
 
-module.exports = ProductAttribute;
+module.exports = Category;
