@@ -99,3 +99,21 @@ module.exports.update = async (req, res) => {
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }
+
+// Delete a category
+module.exports.delete = async (req, res) => {
+    try {
+        let categoryId = req.params.id
+        try {
+            await Category.destroy({ where: { id: categoryId }})
+        } catch(err_db) {
+            if (err_db.name === "SequelizeForeignKeyConstraintError") {
+                const err = new ErrorObj(errorCodes.foreignKeyConstraint, 422, "Violate constraint", "violate foreign key constraint parentId.", { pointer: "/parentId"})
+                return res.status(422).json({ errors: [err] })
+            }
+        }
+        res.status(200).json({message: "category is deleted"})
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}

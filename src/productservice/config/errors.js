@@ -4,7 +4,8 @@ const errorCodes = {
     internalError: 103, // Internal error
     duplicateEntry: 104, // Duplicate record in database
     invalidData: 105, // Invalid data in request body
-    notFound: 106 // Not found record in database
+    notFound: 106, // Not found record in database
+    foreignKeyConstraint: 107 // Can't delete a resource because foreign key constraint
 }
 
 module.exports = errorCodes;
