@@ -81,7 +81,8 @@ module.exports.update = async (req, res) => {
         let category
         try {
             category = await Category.update(data, {
-                where: { id: categoryId }
+                where: { id: categoryId },
+                returning: true,
             })
         } catch (err_db) {
             if (err_db.name === 'SequelizeUniqueConstraintError') {
@@ -94,7 +95,7 @@ module.exports.update = async (req, res) => {
             }
             throw err_db
         }
-        res.status(200).json({data})
+        res.status(200).json({data: category[1]})
     } catch (error) {
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
