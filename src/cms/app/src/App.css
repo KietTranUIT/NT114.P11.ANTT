@@ -3,6 +3,16 @@
   height: 100%;
 }
 
+.content {
+  position: absolute;
+  width: 85%;
+  right: 0;
+  padding-left: 30px;
+  padding-top: 30px;
+  padding-right: 30px;
+  background-color: #f5f7fa;
+}
+
 /* body {
   background: linear-gradient(to right, #ff9966, #ff5e62);
 } */

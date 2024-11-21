@@ -3,7 +3,7 @@
     height: 77px;
 }
 
-.navbar {
+.navbar-header {
     position: fixed;
     overflow: hidden;
     width: 100%; 
