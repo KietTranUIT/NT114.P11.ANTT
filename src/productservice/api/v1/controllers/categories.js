@@ -7,8 +7,13 @@ const slugify = require('slugify');
 // Get all record in categories table
 module.exports.getAll = async (req, res) => {
     try {
-        let categories = await Category.findAll()
+        let categories = await Category.findAll({
+            include: {
+                model: Category,
+            }
+        })
         res.status(200).json({
+            len: categories.length,
             data: categories
         })
     } catch (error) {
