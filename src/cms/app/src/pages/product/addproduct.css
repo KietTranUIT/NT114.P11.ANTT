@@ -1,0 +1,9 @@
+.content {
+    position: absolute;
+    width: 85%;
+    right: 0;
+    padding-left: 30px;
+    padding-top: 30px;
+    padding-right: 30px;
+    background-color: #f5f7fa;
+}
