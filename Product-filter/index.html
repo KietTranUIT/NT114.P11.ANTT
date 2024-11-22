@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product</title>
+    <link rel="stylesheet" href="CSS/Product.css">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body>
+    <header>
+        <div class="head-container">
+            <div class="logo">
+                <a href="/NT114.P11.ANTT/Product-filter/index.html">
+                    <h1>TechStore</h1>
+                </a>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search for products...">
+            </div>
+            <div class="user-actions">
+                <!-- giỏ hàng -->
+                <a href="#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16">
+                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>                
+                </a>
+                <!-- thông báo -->
+                <a href="#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
+                        <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
+                      </svg>
+                </a>
+                <!-- người dùng -->
+                <a href="#">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                    </svg>
+                </a>          
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h3>
+                Filters
+            </h3>
+        <div class="filter-group">
+            <h4>
+                Availability
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        in stock
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Pre-book
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Out of stock
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Color Family
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Black
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Blue
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Red
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Brands
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Blackberry
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Apple
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Nokie
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Sony
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        LG
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Price range
+            </h4>
+            <div class="price-range">
+                <input placeholder="Min" type="text"/>
+                <input placeholder="Max" type="text"/>
+                <button>Go</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Rating
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="radio"/>
+                        <span class="rating">
+                        ★★★★★
+                        </span>
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="radio"/>
+                        <span class="rating">
+                        ★★★★☆
+                        </span>
+                        &amp; above
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="radio"/>
+                        <span class="rating">
+                        ★★★☆☆
+                        </span>
+                        &amp; above
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="radio"/>
+                        <span class="rating">
+                        ★★☆☆☆
+                        </span>
+                        &amp; above
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="radio"/>
+                        <span class="rating">
+                        ★☆☆☆☆
+                        </span>
+                        &amp; above
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Display type
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        LCD
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        IPS
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        OLED
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        AMOLED
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Retina
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Condition
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        New
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Used
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Refurbrished
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Delivery
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Free Shipping
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        One-day Shipping
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Cash on Delivery
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Campaign
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Summer Sale
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        March Madness
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Flash Sale
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        BOGO Blast
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Warranty
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        3 months
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        6 months
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        1 year
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        2 years
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        3 years
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        5 years
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Warranty Type
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Replacement
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Service
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Partial Coverage
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Apple Care
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Money back
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Extendable
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-group">
+            <h4>
+                Certification
+            </h4>
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        RoHS
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        FCC
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        Conflict Free
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        ISO 9001:2015
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        ISO 27001:2013
+                    </label>
+                </li>
+                <li>
+                    <label>
+                        <input type="checkbox"/>
+                        IEC 61000-4-2
+                    </label>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="product-grid">
+            <div class="product-card">
+                <img alt="PlayStation 5 DualSense Wireless Controller" height="200" src="https://prium.github.io/phoenix/v1.18.0//assets/img/products/6.png" width="200"/>
+                <h4>
+                    PlayStation 5 DualSense Wireless Controller
+                </h4>
+                <div class="price">
+                    <span class="old-price">
+                        $125.00
+                    </span>
+                    $89.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (67 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management & Skin Temperature ..." height="200" src="https://prium.github.io/phoenix/v1.18.0//assets/img/products/1.png" width="200"/>
+                <h4>
+                    Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management & Skin Temperature ...
+                </h4>
+                <div class="price">
+                    <span class="old-price">
+                        $49.99
+                    </span>
+                    $34.99
+                </div>
+                <div class="rating">
+                    ★★★★★ (24 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="iPhone 13 pro max-Pacific Blue, 128GB storage" height="200" src="https://prium.github.io/phoenix/v1.18.0//assets/img/products/2.png" width="200"/>
+                <h4>
+                    iPhone 13 pro max-Pacific Blue, 128GB storage
+                </h4>
+                <div class="price">
+                    <span class="old-price">
+                        $899.99
+                    </span>
+                    $850.99
+                </div>
+                <div class="rating">
+                    ★★★★★ (33 people rated)
+                </div>
+                <div class="colors">
+                    5 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="Apple MacBook Pro 13 inch-M1-8/256GB-Space Gray" height="200" src="https://prium.github.io/phoenix/v1.18.0//assets/img/products/3.png" width="200"/>
+                <h4>
+                    Apple MacBook Pro 13 inch-M1-8/256GB-Space Gray
+                </h4>
+                <div class="price">
+                    <span class="old-price">
+                        $12.00
+                    </span>
+                    $11.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (97 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="2021 Apple 12.9-inch iPad Pro (Wi‑Fi, 128GB) - Space Gray" height="200" src="https://prium.github.io/phoenix/v1.18.0/assets/img/products/7.png" width="200"/>
+                <h4>
+                    2021 Apple 12.9-inch iPad Pro (Wi‑Fi, 128GB) - Space Gray
+                </h4>
+                <div class="price">
+                    $799.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (13 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="Apple AirPods Pro" height="200" src="https://prium.github.io/phoenix/v1.18.0/assets/img/products/16.png" width="200"/>
+                <h4>
+                    Apple AirPods Pro
+                </h4>
+                <div class="price">
+                    $59.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (39 people rated)
+                </div>
+                <div class="colors">
+                    3 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="Apple Magic Mouse (Wireless, Rechargable) - Silver" height="200" src="https://prium.github.io/phoenix/v1.18.0/assets/img/products/10.png" width="200"/>
+                <h4>
+                    Apple Magic Mouse (Wireless, Rechargable) - Silver
+                </h4>
+                <div class="price">
+                    $89.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (6 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+            <div class="product-card">
+                <img alt="RESPAWN 200 Racing Style Gaming Chair, in Gray RSP 200 GRY" height="200" src="https://prium.github.io/phoenix/v1.18.0/assets/img/products/25.png" width="200"/>
+                <h4>
+                    RESPAWN 200 Racing Style Gaming Chair, in Gray RSP 200 GRY
+                </h4>
+                <div class="price">
+                    $499.00
+                </div>
+                <div class="rating">
+                    ★★★★★ (8 people rated)
+                </div>
+                <div class="colors">
+                    2 colors
+                </div>
+            </div>
+        </div>
+        <div class="pagination">
+            <button class="prev">❮</button>
+            <button class="page">1</button>
+            <button class="page">2</button>
+            <button class="page">3</button>
+            <button class="page active">4</button>
+            <button class="page">5</button>
+            <button class="next">❯</button>
+        </div> 
+    </div>
+    <footer class="footer">
+        <div class="footer-container">
+            <!-- Logo and Description -->
+            <div class="footer-column">
+                <div class="footer-logo">
+                    
+                    <h3>TechStore</h3>
+                </div>
+                <p>
+                    Phoenix is an admin dashboard template with fascinating features and amazing layout. 
+                    The template is responsive to all major browsers and is compatible with all available devices and screen sizes.
+                </p>
+            </div>
+
+            <!-- About Phoenix Links -->
+            <div class="footer-column">
+                <h4>About Phoenix</h4>
+                <ul>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Affiliate Program</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms & Conditions</a></li>
+                </ul>
+            </div>
+
+            <!-- Stay Connected -->
+            <div class="footer-column">
+                <h4>Stay Connected</h4>
+                <ul>
+                    <li><a href="#">Blogs</a></li>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                </ul>
+            </div>
+
+            <!-- Customer Service -->
+            <div class="footer-column">
+                <h4>Customer Service</h4>
+                <ul>
+                    <li><a href="#">Help Desk</a></li>
+                    <li><a href="#">Support, 24/7</a></li>
+                    <li><a href="#">Community of Phoenix</a></li>
+                </ul>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="footer-column">
+                <h4>Payment Method</h4>
+                <ul>
+                    <li><a href="#">Cash on Delivery</a></li>
+                    <li><a href="#">Online Payment</a></li>
+                    <li><a href="#">PayPal</a></li>
+                    <li><a href="#">Installment</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

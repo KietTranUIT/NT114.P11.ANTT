@@ -1,0 +1,265 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+}
+
+.head-container {
+    display: flex; /* Sử dụng flexbox để căn chỉnh theo hàng */
+    justify-content: space-between; /* Căn giữa các phần tử */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    padding: 10px 20px; /* Khoảng cách bên trong cho header */
+    background-color: #f8f8f8; /* Màu nền cho header */
+    width: 100%;
+    max-width: auto;
+    margin: 0  340.5px 0 340.5px;
+}
+
+header {
+    background-color: #f8f8f8;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.logo h1 {
+    color: #ff6600;
+    font-size: 28px;
+    margin: 0;
+}
+
+.search-bar input {
+    padding: 10px;
+    width: 600px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+}
+
+.user-actions a {
+    text-decoration: none;
+    color: #333;
+    margin-left: 20px;
+    font-size: 14px;
+}
+
+.user-actions a:hover {
+    color: #ff6600;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 250px 1fr; /* Adjust widths as needed */
+}
+
+.sidebar{
+    width: 250px;
+    background-color: #ffffff;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    margin-right: 20px;
+    grid-column: 1;
+    height: 1150px; /* Adjust the height as needed */
+    margin-bottom: 20px;
+    overflow-y: auto;
+}
+.sidebar h3 {
+    margin-top: 0;
+}
+
+.sidebar .filter-group {
+    margin-bottom: 20px;
+}
+
+.sidebar .filter-group h4 {
+    margin-bottom: 10px;
+}
+
+.sidebar .filter-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar .filter-group ul li {
+    margin-bottom: 10px;
+}
+
+.sidebar .filter-group ul li label {
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .filter-group ul li label input {
+    margin-right: 10px;
+}
+
+.sidebar .filter-group .price-range input {
+    width: 100px;
+    padding: 5px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.main-content {
+    grid-column: 2;
+    padding-left: 20px;
+}
+
+.product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.product-card {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding: 20px;
+    width: calc(25% - 20px);
+    box-sizing: border-box;
+}
+
+.product-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+.product-card h4 {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+.product-card .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.product-card .old-price {
+    text-decoration: line-through;
+    color: #999;
+    margin-right: 10px;
+}
+
+.product-card .rating {
+    color: #ff9800;
+}
+
+.product-card .colors {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #999;
+}
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 5px;
+    margin: 20px 0;
+}
+  
+.pagination button {
+    border: none;
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 8px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+  
+.pagination button.active {
+    background-color: #007bff;
+    color: #fff;
+    font-weight: bold;
+}
+  
+.pagination button:hover:not(.active) {
+    background-color: #ddd;
+}
+  
+.pagination .prev,
+.pagination .next {
+    font-weight: bold;
+}
+  
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.footer {
+    background-color: #dee2e9;
+    padding: 40px 0;
+    color: #333;
+    position: relative;
+    width: 100vw;
+    bottom: 0;
+}
+
+.footer-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr; /* Cột logo chiếm gấp đôi (2fr) */
+    gap: 40px; /* Khoảng cách giữa các cột */
+    margin: 0 340.5px 0 340.5px;
+    padding: 0 16px;
+    max-width: 1600px;
+}
+
+.footer h3 {
+    color: #ff6600;
+    font-size: 26.18px;
+    margin-left: 8px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.footer h4 {
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-weight: 800;
+    line-height: 16px;
+}
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer ul li {
+    margin-bottom: 10px;
+}
+
+.footer ul li a {
+    text-decoration: none;
+    color: #3a3838;
+    font-size: 12.8px;
+    line-height: 15.36px;
+    font-weight: 400;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    text-align: left;
+}
+
+.footer ul li a:hover {
+    text-decoration: underline;
+    color: rgb(192, 146, 61);
+}
+
+.footer-column p {
+    color: #3a3838;
+    font-size: 12.8px;
+    line-height: 15.36px;
+    font-weight: 400;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    text-align: left;
+}
