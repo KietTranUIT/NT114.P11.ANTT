@@ -14,13 +14,13 @@ app.use(cors({
     exposedHeaders: ['Authorization'],
 }));
 
-services.forEach(({route, target}) => {
-    const proxyOptions = {
+services.forEach(({route, target, rewrite}) => {
+    let proxyOptions = {
         target,
         changeOrigin: true,
         pathRewrite: {
-            [`^${route}`]: "",
-        },
+            '^/': `${rewrite}`
+        }
     }
 
     // if (!auth) {

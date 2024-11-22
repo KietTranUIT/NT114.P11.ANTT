@@ -7,11 +7,18 @@ module.exports.services = [
                 path: "/",
                 auth: ["GET"]
             }
-        ]
+        ],
+        rewrite: "/"
+    }, 
+    {
+        route: "/categories",
+        target: "http://localhost:9005/",
+        paths: [],
+        rewrite: '/categories',
     }
 ]
 
 module.exports.serviceIdentity = {
     "/users": 0,
-    "/admin": 1
+    "/categories": 1
 }
