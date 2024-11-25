@@ -9,13 +9,6 @@ function AddProduct() {
     const editorRef = useRef(null);
     return (
         <>
-            <Header />
-            <Panel />
-            {/* <div className="editor_wrap">
-                <div className="editor">
-                    <div className="form"></div>
-                </div>
-            </div> */}
             <div className="content">
                 <form className="add-product-content mb-9">
                     <div className="d-flex justify-content-between mb-5">

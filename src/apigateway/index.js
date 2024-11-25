@@ -20,6 +20,11 @@ services.forEach(({route, target, rewrite}) => {
         changeOrigin: true,
         pathRewrite: {
             '^/': `${rewrite}`
+        },
+        on: {
+            proxyReq: (proxyReq, req, res) => {
+                console.log(proxyReq.path)
+            }
         }
     }
 

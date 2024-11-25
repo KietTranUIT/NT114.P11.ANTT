@@ -13,9 +13,9 @@ const Dashboard = () => {
     <>
         <div className="Dashboard">
         <Header/>
-        <Panel/>
+        <Panel navId={'dashboard-nav'}/>
 
-        <div className="main-content">
+        <div className="content">
             <div className="main-content-header">
                 <h1>Ecommerce Dashboard</h1>
                 <span>Welcome to ecommerce Dashboard</span>

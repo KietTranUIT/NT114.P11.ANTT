@@ -1,135 +1,29 @@
 import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
 import { Editor } from "@tinymce/tinymce-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { getCategories, createCategory } from "./../../helpers";
 import slugify from "slugify";
+import { useNavigate } from "react-router-dom";
 
-function AddCategory() {
-    const editorRef = useRef(null);
-    const [categories, setCategories] = useState([
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
+
+function AddCategory({data}) {
+    const navigate = useNavigate()
+    const editorRef = useRef(null)
+    const [categories, setCategories] = useState(data)
+    const [isSuccess, setIsSuccess] = useState(false)
+
+    // Loading list categories access page
+    useEffect(() => {
+        // Fetch categories
+        const fetchCategories = async () => {
+            const result = await getCategories()
+            if (!(result instanceof Error)) {
+                setCategories(result.data)
+            }
         }
-    ])
+        fetchCategories()
+    }, [])
 
     // Render slug when input in name category
     const handleChangeInputname = (event) => {
@@ -145,7 +39,7 @@ function AddCategory() {
     }
 
     // Handle click add category
-    const handleAddCategory = (event) => {
+    const handleAddCategory = async (event) => {
         event.preventDefault()
 
         const name = document.getElementById('name-category').value
@@ -160,14 +54,49 @@ function AddCategory() {
             category.parentId = parseInt(parentId)
         }
 
-        console.log(category)
+        // Send request create category
+        const result = await createCategory(category)
+        // Check if error
+        if (result.status === 422) {
+            const errors = result.response.data.errors
+            errors.forEach(err => {
+                if (err.source.pointer === '/name') {
+                    document.getElementById('name-category').classList.add('border-danger')
+                    const errAlert = document.getElementById('name-category-error')
+                    errAlert.classList.remove('d-none')
+                    errAlert.textContent = err.detail
+                } else {
+                    document.getElementById('slug-category').classList.add('border-danger')
+                    const errAlert = document.getElementById('slug-category-error')
+                    errAlert.classList.remove('d-none')
+                    errAlert.textContent = err.detail
+                }
+            });
+            return
+        }
+
+        // If success
+        setIsSuccess(true)
+        setTimeout(() => {
+            navigate('/categories')
+        }, 3000)
+    }
+
+    // Handle close success btn
+    const handleCloseAlert = (event) => {
+        event.preventDefault()
+        setIsSuccess(false)
+    }
+
+    // Handle remove error alert
+    const handleRemoveErrorAlert = (event) => {
+        const id = event.target.id
+        document.getElementById(id).classList.remove('border-danger')
+        document.getElementById(id + '-error').classList.add('d-none')
     }
 
     return (
         <>
-            <Header/>
-            <Panel/>
-            <div className="content">
                 <form className="add-product-content mb-9">
                     <div className="d-flex justify-content-between mb-5">
                         <div className="add-product-header-left">
@@ -179,18 +108,31 @@ function AddCategory() {
                         </div>
                     </div>
                     <div className="row">
+                        { isSuccess ? (
+                            <div className="">
+                            <div class="alert alert-success d-flex justify-content-between" role="alert">
+                                Product category successfully created !
+                                <button type="button" class="btn-close" aria-label="Close" onClick={handleCloseAlert}></button>
+                            </div>
+                        </div>
+                        ) : (<></>)}
                         <div className="col-8">
                             <h4 className="mb-3">Category Name</h4>
-                            <input type="text" className="form-control mb-5" placeholder="Write name here..." onChange={handleChangeInputname} id="name-category"></input>
+                            <div className="mb-5">
+                                <input type="text" className="form-control" placeholder="Write name here..." onClick={handleRemoveErrorAlert} onChange={handleChangeInputname} id="name-category"></input>
+                                <span className="text-danger d-none" id="name-category-error">error</span>
+                            </div>
                             <h4 className="mb-3">Slug</h4>
-                            <input type="text" className="form-control mb-5" id="slug-category" readOnly></input>
+                            <div className="mb-5">
+                                <input type="text" className="form-control mb-5" id="slug-category" readOnly onClick={handleRemoveErrorAlert}></input>
+                                <span className="text-danger d-none" id="slug-category-error">error</span>
+                            </div>
                             <div className="mb-5">
                                 <h4 className="mb-3">Category Description</h4>
                                 <Editor
                                     id="description-category"
                                     apiKey="nalj1qwh3ngb7zpj4u9hwsgg97w4ll0awqdypqjqfr11mt62"
                                     onInit={(evt, editor) => editorRef.current = editor}
-                                    initialValue="<p>Write a description here...</p>"
                                     init={{
                                         height: 200,
                                         menubar: false,
@@ -237,7 +179,6 @@ function AddCategory() {
                         </div>
                     </div>
                 </form>
-            </div>
         </>
     )
 }

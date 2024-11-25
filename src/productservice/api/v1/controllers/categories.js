@@ -3,7 +3,8 @@ const ErrorObj = require('../models/errors');
 const Category = require('../models/categories');
 const { checkRequiredParameters, strongParameters } = require('../help');
 const slugify = require('slugify');
-const { where } = require('sequelize');
+const sequelize = require('sequelize');
+const Product = require('../models/products');
 
 // Get all record in categories table
 module.exports.getAll = async (req, res) => {
@@ -16,6 +17,78 @@ module.exports.getAll = async (req, res) => {
         res.status(200).json({
             len: categories.length,
             data: categories
+        })
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+// Get detail a category
+module.exports.getCategory = async (req, res) => {
+    try {
+        let categoryId = req.params.id
+        
+        let category = await Category.findOne({
+            where: { id: categoryId },
+            include: [{
+                model: Product,
+                attributes: []
+            }, {
+                model: Category,
+            }],
+            attributes: ['id', 'name', 'description', 'slug', 'parentId', 'icon', 'createdAt', 'updatedAt', [sequelize.fn('COUNT', sequelize.col('products.id')), 'productCount']],
+            group: ['categories.id', 'category.id']
+        })
+        res.status(200).json({
+            type: 'category',
+            data: category
+        })
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+// Delete multiple category with id
+module.exports.deleteMultiple = async (req, res) => {
+    try {
+        const { selected } = req.body
+        if (selected.length <= 0) {
+            const err = new ErrorObj(errorCodes.invalidData, 422, 'Invalid data', 'category id empty.', { pointer: "/selected"})
+            res.status(422).json({ errors: [err] })
+        }
+
+        try {
+            const result = await Category.destroy({
+                where: {
+                    id: {
+                        [sequelize.Op.in]: selected
+                    }
+                }
+            })
+            res.status(200).json({message: 'delete successfully.'})
+        } catch (err_db) {
+            const err = new ErrorObj(errorCodes.foreignKeyConstraint, 422, 'Violate constraint', err_db.message, { pointer: "/selected" })
+            res.status(422).json({errors: [err]})
+        }
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+// Search category
+module.exports.search = async (req, res) => {
+    try {
+        const { name } = req.query
+        const categories = await Category.findAll({
+            where: {
+                name: {
+                    [sequelize.Op.iLike]: `%${name}%`
+                }
+            }
+        })
+        res.status(200).json({
+            len: categories.length,
+            data: categories,
         })
     } catch (error) {
         res.status(500).json(ErrorObj.createInternalError(error.message))

@@ -58,4 +58,4 @@ Category.hasMany(Product, {
 });
 Product.belongsTo(Category);
 
-module.exports = User;
+module.exports = Product;

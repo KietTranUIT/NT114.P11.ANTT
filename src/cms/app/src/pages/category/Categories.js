@@ -1,145 +1,36 @@
 import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
 import { useState, useEffect } from "react";
-import { formatTimeStamp, getCategories } from "./../../helpers";
+import { formatTimeStamp, getCategories, removeCategory, removeCategories, searchCategory } from "./../../helpers";
 import { useNavigate } from "react-router-dom";
+import { debounce } from "lodash"
+import AddCategory from "./AddCategory";
+import DetailCategory from "./DetailCategory";
 
 function Categories() {
     const navigate = useNavigate()
     const viewDefault = 10
     const [viewLess, setViewLess] = useState(false)
-    const [categories, setCategories] = useState([
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }
-    ])
-    // useEffect(() => {
-    //     // Fetch categories
-    //     setCategories(getCategories())
-    // })
+    const [categories, setCategories] = useState([])
     const [sliceItems, setSliceItems] = useState({
         start: 0,
         end: (categories.length < 10) ? categories.length : viewDefault
     })
+    const [page, setPage] = useState('category')
+    const [indexCategory, setIndexCategory] = useState(0)
+
+    // Loading list categories access page
+    useEffect(() => {
+        // Fetch categories
+        const fetchCategories = async () => {
+            const result = await getCategories()
+            if (!(result instanceof Error)) {
+                setCategories(result.data)
+                setSliceItems({...sliceItems, end: (result.data.length < 10) ? result.data.length : viewDefault})
+            }
+        }
+        fetchCategories()
+    },[])
 
     // Handle when user click view less
     const handleViewLess = () => {
@@ -155,19 +46,55 @@ function Categories() {
 
     // Navigate to add category page when click
     const handleAddCategory = () => {
-        navigate('/categories/add')
+        //navigate('/categories/add')
+        setPage('addcategory')
     }
 
     // Handle click on edit category
     const handleEditCategory = (event) => {
         const categoryId = event.currentTarget.dataset.id
-        navigate(`/categories/${categoryId}`)
+        setIndexCategory(categoryId)
+        setPage('detailcategory')
+        //navigate(`/categories/${categoryId}`)
     }
 
     // Handle click on remove category
-    const handleRemoveCategory = (event) => {
-        const categoryId = event.currrentTarget.dataset.id
+    const handleRemoveCategory = async (event) => {
+        const categoryId = event.currentTarget.dataset.id
+        
         // remove category api
+        const result = await removeCategory(categoryId)
+        if (result.status != 200) {
+            alert(result.response.data.errors[0].detail)
+        } else {
+            alert('delete successfully')
+            window.location.reload()
+        }
+        
+    }
+
+    // Handle remove selected categories
+    const handleRemoveSelectedCategories = async (event) => {
+        event.preventDefault()
+
+        const inputs = document.getElementsByClassName('select-remove-input')
+        let selected = []
+        for (let i = 0; i < inputs.length; i++) {
+            if (inputs[i].checked) {
+                selected.push(inputs[i].value)
+            }
+        }
+        if (selected.length <= 0) {
+            alert('Please select a category to delete')
+        } else {
+            const result = await removeCategories(selected)
+            if (result.status == 200) {
+                alert('delete successfully')
+                window.location.reload()
+            } else {
+                alert(result.response.data.errors[0].detail)
+            }
+        }
     }
 
     // Handle click on input check all
@@ -185,12 +112,41 @@ function Categories() {
         }
     }
 
+    const handleSearch = async (query) => {
+        const result = await searchCategory(query)
+        if (!(result instanceof Error)) {
+            if (result.data.length <= 0) {
+                setCategories([])
+            } else {
+                setCategories(result.data)
+            }
+            setSliceItems({...sliceItems, end: (result.data.length < 10) ? result.data.length : viewDefault})
+        }
+    }
+
+    const debouncedSearch = debounce(handleSearch, 500)
+
+    // Search category
+    const handleSearchChange = (event) => {
+        debouncedSearch(event.target.value)
+    }
+
     return (
         <>
             <Header />
-            <Panel />
+            <Panel navId={'categories-nav'}/>
             <div className="content">
-                <div className="mb-5">
+                { !(page === 'category') ? (
+                    <>
+                        { (page === 'addcategory') ? (
+                            <AddCategory data={categories}/>
+                        ):(
+                            <DetailCategory categoryId={indexCategory}/>
+                        ) }
+                    </>
+                ) : (
+                    <>
+                        <div className="mb-5">
                     <div className="mb-4">
                         <h2 className="fw-bold">Categories</h2>
                     </div>
@@ -209,7 +165,7 @@ function Categories() {
                                 <form id="form1">
                                     <div className="input-group d-flex">
                                         <div className="form-outline">
-                                            <input type="search" id="form1" className="form-control" placeholder="search"/>
+                                            <input type="search" id="form1" className="form-control" placeholder="search" onChange={handleSearchChange}/>
                                         </div>
                                         <button type="button" className="btn btn-primary">
                                             search
@@ -218,7 +174,7 @@ function Categories() {
                                 </form>
                             </div>
                             <div className="d-flex gap-2">
-                                <button type="button" className="btn btn-danger">
+                                <button type="button" className="btn btn-danger" onClick={handleRemoveSelectedCategories}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                         <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
@@ -242,22 +198,24 @@ function Categories() {
                                         </th>
                                         <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width:"150px"}} data-sort="product">CATEGORY NAME</th>
                                         <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width:"150px"}} data-sort="product">SLUG</th>
-                                        <th className="sort align-middle ps-4" scope="col" data-sort="price" style={{width:"450px"}}>DESCRIPTION</th>
-                                        <th className="sort align-middle ps-3" scope="col" data-sort="tags" style={{width:"100px"}}>PRODUCTS</th>
+                                        <th className="sort align-middle ps-4" scope="col" data-sort="price" style={{width:"395px"}}>DESCRIPTION</th>
+                                        <th className="sort align-middle ps-3" scope="col" data-sort="tags" style={{width:"155px"}}>LAST UPDATE</th>
                                         <th className="sort align-middle fs-8 ps-4" scope="col" style={{width:"155px"}}>PUBLISHED ON</th>
                                         <th className="sort text-end align-middle pe-0 ps-4" scope="col"></th>
                                     </tr>
                                 </thead>
                   <tbody className="list" id="products-table-body">
-                    { categories.slice(sliceItems.start, sliceItems.end).map((item, index) => (
+                  { categories.slice(sliceItems.start, sliceItems.end).map((item, index) => (
                         <tr className="position-static">
+                            
                         <td className="fs-9 align-middle">
-                          <div className="form-check mb-0 fs-8"><input className="form-check-input select-remove-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
+                          <div className="form-check mb-0 fs-8">
+                            <input value={item.id} className="form-check-input select-remove-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
                         </td>
                         <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">{item.name}</a></td>
                         <td className="product align-middle ps-4">{item.slug}</td>
                         <td className="align-middle white-space-nowrap text-body-quaternary fs-9 fw-semibold">{item.description}</td>
-                        <td className="align-middle white-space-nowrap text-body-quaternary fs-9 fw-semibold text-end">20</td>
+                        <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.updatedAt)}</td>
                         <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.createdAt)}</td>
                         <td className="d-flex gap-2">
                           <button className="btn btn-primary" data-id={item.id} onClick={handleEditCategory}>
@@ -296,6 +254,8 @@ function Categories() {
             </div>
                 </div>
                 </div>
+                    </>
+                )}
             </div>
         </>
     )

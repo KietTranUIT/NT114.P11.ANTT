@@ -14,7 +14,7 @@ module.exports.services = [
         route: "/categories",
         target: "http://localhost:9005/",
         paths: [],
-        rewrite: '/categories',
+        rewrite: '/categories/',
     }
 ]
 

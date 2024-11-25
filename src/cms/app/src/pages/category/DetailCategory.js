@@ -2,147 +2,52 @@ import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
 import { useState, useEffect, useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
-import help from "./../../helpers";
+import { useParams } from "react-router-dom";
+import { getCategory, getCategories, updateCategory } from "./../../helpers";
+import slugify from "slugify";
 
-function DetailCategory() {
+
+function DetailCategory({ categoryId }) {
     const editorRef = useRef(null);
+    const [isSuccess, setIsSuccess] = useState(false)
     const [isEdit, setIsEdit] = useState(false)
-    const [categories, setCategories] = useState([
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        }, {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },{
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
+    const [categories, setCategories] = useState([])
+    // Init a category
+    const [category, setCategory] = useState({
+        id: '',
+        name: "",
+        description: "",
+        slug: "",
+        parentId: 0,
+        icon: null,
+        createdAt: "",
+        updatedAt: "",
+        productCount: 0,
+        category: {}
+    })
+
+    useEffect(() => {
+        const fetchCategory = async () => {
+            const result1 = await getCategory(categoryId)
+            console.log(result1)
+            setCategory(result1.data)
+
+            const result2 = await getCategories()
+            let indexs = []
+            for (let i = 0; i < result2.data.length; i++) {
+                if (indexs.length == 2) {
+                    break
+                }
+
+                if (result2.data[i].id == result1.data.id || (result1.data.category != null && result2.data[i].id == result1.data.category.id)) {
+                    indexs.push(i)
+                }
+            }
+            let dataCategories = result2.data.filter((item, index) => !indexs.includes(index))
+            setCategories(dataCategories)
         }
-    ])
-    const [category, setCategory] = useState(
-        {
-            id: 3,
-            name: "Máy tính bảng",
-            description: "điện thoại thông minh",
-            slug: "djien thoai",
-            createdAt: "2024-11-21T05:41:15.290Z",
-            updatedAt: "2024-11-21T05:41:15.290Z",
-            parentId: null,
-            category: null
-        },
-    )
+        fetchCategory()
+    }, [])  
     // Handle click on edit button
     const handleEdit = (event) => {
         event.preventDefault()
@@ -155,23 +60,38 @@ function DetailCategory() {
         setIsEdit(false)
     }
 
+    // Handle change input name
+    const handleChangeInputName = (event) => {
+        let name = event.target.value
+        const slug = slugify(name, {
+            lower: true, // Convert to lowercase
+            strict: true, // Remove special characters
+            trim: true,  // Trim leading/trailing spaces
+        });
+
+        const slugInput = document.getElementById('slug-category')
+        slugInput.value = slug
+    }
+
     // Handle update category
-    const updateCategory = (event) => {
+    const handleUpdateCategory = async (event) => {
         event.preventDefault()
-        
         let updateParams = {}
-        const name = document.getElementById('name-category').value
+        let name = document.getElementById('name-category').value
+        if (name == '') {
+            name = category.name
+        }
         if (name != category.name) {
             updateParams.name = name
         }
 
         const slug = document.getElementById('slug-category').value
-        if (slug) {
+        if (slug != category.slug) {
             updateParams.slug = slug
         }
 
         const description = editorRef.current.getContent({format: "text"})
-        if (description) {
+        if (description != category.description) {
             updateParams.description = description
         }
 
@@ -180,14 +100,40 @@ function DetailCategory() {
             updateParams.parentId = parseInt(parentId)
         }
 
-
-        console.log(updateParams)
+        const result = await updateCategory(category.id, updateParams)
+        // Check if error
+        if (result.status === 422) {
+            const errors = result.response.data.errors
+            errors.forEach(err => {
+                if (err.source.pointer === '/name') {
+                    document.getElementById('name-category').classList.add('border-danger')
+                    const errAlert = document.getElementById('name-category-error')
+                    errAlert.classList.remove('d-none')
+                    errAlert.textContent = err.detail
+                } else {
+                    document.getElementById('slug-category').classList.add('border-danger')
+                    const errAlert = document.getElementById('slug-category-error')
+                    errAlert.classList.remove('d-none')
+                    errAlert.textContent = err.detail
+                }
+            });
+        } else {
+            setIsSuccess(true)
+            setTimeout(() => {
+                window.location.reload()
+            }, 2000)
+        }
+        
     }
+
+     // Handle close success btn
+     const handleCloseAlert = (event) => {
+        event.preventDefault()
+        setIsSuccess(false)
+    }
+
     return (
         <>
-            <Header/>
-            <Panel/>
-            <div className="content">
                 <form className="add-product-content mb-9">
                     <div className="d-flex justify-content-between mb-5">
                         <div className="add-product-header-left">
@@ -205,7 +151,7 @@ function DetailCategory() {
                                 </>
                             ) : (
                                 <>
-                                    <button type="button" class="btn btn-primary" onClick={updateCategory}>Update</button>
+                                    <button type="button" class="btn btn-primary" onClick={handleUpdateCategory}>Update</button>
                                     <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
                                 </>
                             )}
@@ -213,15 +159,27 @@ function DetailCategory() {
                         </div>
                     </div>
                     <div className="row">
+                    { isSuccess ? (
+                            <div className="">
+                            <div class="alert alert-success d-flex justify-content-between" role="alert">
+                                Product category successfully updated !
+                                <button type="button" class="btn-close" aria-label="Close" onClick={handleCloseAlert}></button>
+                            </div>
+                        </div>
+                        ) : (<></>)}
                         <div className="col-8">
                             <h4 className="mb-3">Category Name</h4>
                             { isEdit ? (
-                                <input type="text" className="form-control mb-5" id="name-category" value={category.name}></input>
+                                <>
+                                    <input type="text" className="form-control mb-5" id="name-category" data-name={category.name} placeholder={category.name} onChange={handleChangeInputName}></input>
+                                    <span className="text-danger d-none" id="name-category-error">error</span>
+                                </>
                             ) : (
                                 <input type="text" className="form-control mb-5" id="name-category" value={category.name} readOnly></input>
                             )}
                             <h4 className="mb-3">Slug</h4>
                             <input type="text" className="form-control mb-5" id="slug-category" value={category.slug} readOnly></input>
+                            <span className="text-danger d-none" id="slug-category-error">error</span>
                             <div className="mb-5">
                                 <h4 className="mb-3">Category Description</h4>
                                 { isEdit ? (
@@ -267,10 +225,14 @@ function DetailCategory() {
                                                             <h5 className="mb-0 me-2 fs-6 text-body-highlight">Category name</h5>
                                                         </div>
                                                         { !isEdit ? (
-                                                            <input type="text" className="form-control mb-5" id="parent-category" value={category.name} readOnly></input>
+                                                            <input type="text" className="form-control mb-5" id="parent-category" value={category.category ? category.category.name : null} readOnly></input>
                                                         ) : (
                                                             <select className="form-select mb-3" id="parent-category">
-                                                            <option value={category.id}>{category.name}</option>
+                                                            { category.category ? (
+                                                                <option value={category.category.id}>{category.category.name}</option>
+                                                            ) : (
+                                                                <option value='null'></option>
+                                                            )}
                                                             { categories.map((item, index) => (
                                                                 <option value={item.id}>{item.name}</option>
                                                             ))}
@@ -286,7 +248,6 @@ function DetailCategory() {
                         </div>
                     </div>
                 </form>
-            </div>
         </>
     )
 }

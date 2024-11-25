@@ -90,9 +90,9 @@ export const createCategory = async (category) => {
 }
 
 // Update a category
-export const updateCategory = async (category) => {
+export const updateCategory = async (categoryId, params) => {
     try {
-        const result = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/categories`, category)
+        const result = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/categories/${categoryId}`, params)
         return result.data
     } catch (error) {
         return error
@@ -100,9 +100,39 @@ export const updateCategory = async (category) => {
 }
 
 // Remove a category
-export const removeCategory = async (category) => {
+export const removeCategory = async (categoryId) => {
     try {
-        const result = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/categories`, category)
+        const result = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/categories/${categoryId}`)
+        return result
+    } catch (error) {
+        return error
+    }
+}
+
+// Remove multiple category
+export const removeCategories = async (selected) => {
+    try {
+        const result = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/categories/delete`, {selected})
+        return result
+    } catch (error) {
+        return error
+    }
+}
+
+// Get a detail category
+export const getCategory = async (categoryId) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/categories/${categoryId}`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Search category
+export const searchCategory = async (params) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/categories/search?name=${params}`)
         return result.data
     } catch (error) {
         return error
