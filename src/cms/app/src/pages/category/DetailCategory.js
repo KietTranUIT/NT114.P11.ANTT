@@ -5,13 +5,15 @@ import { Editor } from "@tinymce/tinymce-react";
 import { useParams } from "react-router-dom";
 import { getCategory, getCategories, updateCategory } from "./../../helpers";
 import slugify from "slugify";
-
-
+import Modal from "./../../components/modal/modal";
 function DetailCategory({ categoryId }) {
     const editorRef = useRef(null);
     const [isSuccess, setIsSuccess] = useState(false)
     const [isEdit, setIsEdit] = useState(false)
     const [categories, setCategories] = useState([])
+    const [isShowModal, setIsShowModal] = useState(false)
+    const [modalContent, setModalContent] = useState({ type: '', title: '', message: ''})
+    const [isLoading, setIsLoading] = useState(false)
     // Init a category
     const [category, setCategory] = useState({
         id: '',
@@ -75,6 +77,7 @@ function DetailCategory({ categoryId }) {
 
     // Handle update category
     const handleUpdateCategory = async (event) => {
+        setIsLoading(true)
         event.preventDefault()
         let updateParams = {}
         let name = document.getElementById('name-category').value
@@ -106,22 +109,18 @@ function DetailCategory({ categoryId }) {
             const errors = result.response.data.errors
             errors.forEach(err => {
                 if (err.source.pointer === '/name') {
-                    document.getElementById('name-category').classList.add('border-danger')
-                    const errAlert = document.getElementById('name-category-error')
-                    errAlert.classList.remove('d-none')
-                    errAlert.textContent = err.detail
+                    setModalContent({ type: "error", title: "Lỗi",message: "Tên của danh mục đã tồn tại. Vui lòng chọn một tên khác"})
+                    setIsShowModal(true)
                 } else {
-                    document.getElementById('slug-category').classList.add('border-danger')
-                    const errAlert = document.getElementById('slug-category-error')
-                    errAlert.classList.remove('d-none')
-                    errAlert.textContent = err.detail
+                    setModalContent({ type: "error", title: "Lỗi",message: "Slug của danh mục đã tồn tại. Vui lòng chọn một slug khác"})
+                    setIsShowModal(true)
                 }
             });
         } else {
-            setIsSuccess(true)
-            setTimeout(() => {
-                window.location.reload()
-            }, 2000)
+            setCategory(result.data[0])
+            setModalContent({ type: 'success', title: 'Thành công', message: 'Danh mục đã được cập nhật!'})
+            setIsShowModal(true)
+            setIsEdit(false)
         }
         
     }
@@ -134,11 +133,21 @@ function DetailCategory({ categoryId }) {
 
     return (
         <>
+        { isShowModal && (
+            <Modal handleCloseModal={() => setIsShowModal(false)} 
+                message={modalContent.message} 
+                title={modalContent.title}
+                type={modalContent.type}
+                />
+        )}
                 <form className="add-product-content mb-9">
+                {isShowModal && (
+                    <div className="modal-backdrop fade show"></div>
+                )}
                     <div className="d-flex justify-content-between mb-5">
                         <div className="add-product-header-left">
-                            <h1 className="fw-bold">Category</h1>
-                            <span className="fw-bold">#Category id: {category.id}</span>
+                            <h1 className="fw-bold" style={{ color:"#007bff"}}>Danh mục sản phẩm</h1>
+                            <span className="fw-bold">Category id: #{category.id}</span>
                         </div>
                         <div className="d-flex align-items-center gap-2">
                             { !isEdit ? (
@@ -151,8 +160,18 @@ function DetailCategory({ categoryId }) {
                                 </>
                             ) : (
                                 <>
-                                    <button type="button" class="btn btn-primary" onClick={handleUpdateCategory}>Update</button>
-                                    <button className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+                                    { isLoading ? (
+                                        <button class="btn btn-primary d-flex gap-1 align-items-center" type="button" disabled>
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <span class="sr-only">Đang lưu...</span>
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button type="button" class="btn btn-primary" onClick={handleUpdateCategory}>Cập nhật</button>
+                                            <button className="btn btn-secondary" onClick={handleCancel}>Hủy bỏ</button>
+                                        </>
+                                    )}
+                                    
                                 </>
                             )}
                             
@@ -168,7 +187,7 @@ function DetailCategory({ categoryId }) {
                         </div>
                         ) : (<></>)}
                         <div className="col-8">
-                            <h4 className="mb-3">Category Name</h4>
+                            <h4 className="mb-3">Tên danh mục</h4>
                             { isEdit ? (
                                 <>
                                     <input type="text" className="form-control mb-5" id="name-category" data-name={category.name} placeholder={category.name} onChange={handleChangeInputName}></input>
@@ -181,7 +200,7 @@ function DetailCategory({ categoryId }) {
                             <input type="text" className="form-control mb-5" id="slug-category" value={category.slug} readOnly></input>
                             <span className="text-danger d-none" id="slug-category-error">error</span>
                             <div className="mb-5">
-                                <h4 className="mb-3">Category Description</h4>
+                                <h4 className="mb-3">Mô tả</h4>
                                 { isEdit ? (
                                     <Editor
                                     id="description-category"
@@ -206,7 +225,7 @@ function DetailCategory({ categoryId }) {
                                     />
                                 ) : (
                                     <div class="form-group">
-                                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" value={category.description} readOnly></textarea>
+                                        <textarea style={{height:"200px"}} className="form-control" id="exampleFormControlTextarea1" rows="3" value={category.description} readOnly></textarea>
                                      </div>
                                 )}
                                 
@@ -217,12 +236,12 @@ function DetailCategory({ categoryId }) {
                                 <div className="col-12">
                                     <div className="card mb-3">
                                         <div className="card-body">
-                                            <h4 className="card-title mb-4 fw-normal">Parent Category</h4>
+                                            <h4 className="card-title mb-4 fw-normal">Danh mục cha</h4>
                                             <div className="row gx-3">
                                                 <div className="col-12">
                                                     <div className="mb-4">
                                                         <div className="d-flex flex-wrap mb-2">
-                                                            <h5 className="mb-0 me-2 fs-6 text-body-highlight">Category name</h5>
+                                                            <h5 className="mb-0 me-2 fs-6 text-body-highlight">Tên danh mục</h5>
                                                         </div>
                                                         { !isEdit ? (
                                                             <input type="text" className="form-control mb-5" id="parent-category" value={category.category ? category.category.name : null} readOnly></input>

@@ -16,9 +16,9 @@ var Brand = sequelize.define('brands', {
     description: {
         type: DataTypes.STRING,
     },
-    logo_url: {
+    logo: {
         type: DataTypes.STRING,
-        defaultValue: 'logo.jpg'
+        defaultValue: 'https://res.cloudinary.com/dfgnimhoi/image/upload/v1731375828/brands/an2tejdhnpkw8f0qbao0.jpg'
     },
     slug: {
         type: DataTypes.STRING,

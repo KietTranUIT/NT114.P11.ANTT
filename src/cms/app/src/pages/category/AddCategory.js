@@ -5,13 +5,16 @@ import { useRef, useState, useEffect } from "react";
 import { getCategories, createCategory } from "./../../helpers";
 import slugify from "slugify";
 import { useNavigate } from "react-router-dom";
-
+import Modal from "../../components/modal/modal";
 
 function AddCategory({data}) {
     const navigate = useNavigate()
     const editorRef = useRef(null)
     const [categories, setCategories] = useState(data)
     const [isSuccess, setIsSuccess] = useState(false)
+    const [showModal, setShowModal] = useState(false)
+    const [modalContent, setModalContent] = useState({ type: '', title: '', message: ''})
+    const [isLoading, setIsLoading] = useState(false)
 
     // Loading list categories access page
     useEffect(() => {
@@ -40,6 +43,7 @@ function AddCategory({data}) {
 
     // Handle click add category
     const handleAddCategory = async (event) => {
+        setIsLoading(true)
         event.preventDefault()
 
         const name = document.getElementById('name-category').value
@@ -56,30 +60,25 @@ function AddCategory({data}) {
 
         // Send request create category
         const result = await createCategory(category)
+        setIsLoading(false)
         // Check if error
         if (result.status === 422) {
             const errors = result.response.data.errors
             errors.forEach(err => {
                 if (err.source.pointer === '/name') {
-                    document.getElementById('name-category').classList.add('border-danger')
-                    const errAlert = document.getElementById('name-category-error')
-                    errAlert.classList.remove('d-none')
-                    errAlert.textContent = err.detail
+                    setModalContent({ type: "error", title: "Lỗi",message: "Tên của danh mục đã tồn tại. Vui lòng chọn một tên khác!"})
+                    setShowModal(true)
                 } else {
-                    document.getElementById('slug-category').classList.add('border-danger')
-                    const errAlert = document.getElementById('slug-category-error')
-                    errAlert.classList.remove('d-none')
-                    errAlert.textContent = err.detail
+                    setModalContent({ type: "error", title: "Lỗi",message: "Slug của danh mục đã tồn tại. Vui lòng chọn một slug khác"})
+                    setShowModal(true)
                 }
             });
             return
         }
 
         // If success
-        setIsSuccess(true)
-        setTimeout(() => {
-            navigate('/categories')
-        }, 3000)
+        setModalContent({ type: "success", title: "Thành công",message: "Danh mục đã tạo thành công"})
+        setShowModal(true)
     }
 
     // Handle close success btn
@@ -97,14 +96,30 @@ function AddCategory({data}) {
 
     return (
         <>
+        { showModal && (
+            <Modal handleCloseModal={() => setShowModal(false)} 
+                message={modalContent.message} 
+                title={modalContent.title}
+                type={modalContent.type}
+                />
+        )}
                 <form className="add-product-content mb-9">
+                {showModal && (
+                <div className="modal-backdrop fade show"></div>
+            )}
                     <div className="d-flex justify-content-between mb-5">
                         <div className="add-product-header-left">
-                            <h1 className="fw-bold">Add a category</h1>
-                            <span>Orders placed across your store</span>
+                            <h1 className="fw-bold" style={{ color:"#007bff"}}>Thêm danh mục sản phẩm</h1>
                         </div>
                         <div className="d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-primary" onClick={handleAddCategory}>Publish category</button>
+                        { isLoading ? (
+                            <button class="btn btn-primary d-flex gap-1 align-items-center" type="button" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span class="sr-only">Đang lưu...</span>
+                            </button>
+                        ) : (
+                            <button type="button" class="btn btn-primary" onClick={handleAddCategory}>Tạo danh mục</button>
+                        )}
                         </div>
                     </div>
                     <div className="row">
@@ -117,18 +132,18 @@ function AddCategory({data}) {
                         </div>
                         ) : (<></>)}
                         <div className="col-8">
-                            <h4 className="mb-3">Category Name</h4>
+                            <h4 className="mb-3">Tên danh mục <span style={{color:"red"}}>*</span></h4>
                             <div className="mb-5">
                                 <input type="text" className="form-control" placeholder="Write name here..." onClick={handleRemoveErrorAlert} onChange={handleChangeInputname} id="name-category"></input>
                                 <span className="text-danger d-none" id="name-category-error">error</span>
                             </div>
-                            <h4 className="mb-3">Slug</h4>
+                            <h4 className="mb-3">Slug <span style={{color:"red"}}>*</span></h4>
                             <div className="mb-5">
                                 <input type="text" className="form-control mb-5" id="slug-category" readOnly onClick={handleRemoveErrorAlert}></input>
                                 <span className="text-danger d-none" id="slug-category-error">error</span>
                             </div>
                             <div className="mb-5">
-                                <h4 className="mb-3">Category Description</h4>
+                                <h4 className="mb-3">Mô tả</h4>
                                 <Editor
                                     id="description-category"
                                     apiKey="nalj1qwh3ngb7zpj4u9hwsgg97w4ll0awqdypqjqfr11mt62"
@@ -161,7 +176,7 @@ function AddCategory({data}) {
                                                 <div className="col-12">
                                                     <div className="mb-4">
                                                         <div className="d-flex flex-wrap mb-2">
-                                                            <h5 className="mb-0 me-2 fs-6 text-body-highlight">Parent Category</h5>
+                                                            <h5 className="mb-0 me-2 fs-6 text-body-highlight">Danh mục cha</h5>
                                                         </div>
                                                         <select className="form-select mb-3" id="parent-category">
                                                             <option value="none">none</option>

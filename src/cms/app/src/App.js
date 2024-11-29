@@ -9,6 +9,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Categories from "./pages/category/Categories";
 import AddCategory from "./pages/category/AddCategory";
 import DetailCategory from "./pages/category/DetailCategory";
+import Brands from "./pages/brand/Brands";
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/categories/:id" element={<DetailCategory/>} />
         <Route path="/addproduct" exact element={<AddProduct/>}/>
         <Route path="/listproducts" exact element={<ListProducts/>}/>
+        <Route path="/brands" exact element={<Brands/>}/>
         <Route path="/auth" exact element={<Auth/>} />
         <Route element={ <ProtectedRoute />}>
           <Route path="/" element={ <Dashboard /> } />

@@ -138,3 +138,96 @@ export const searchCategory = async (params) => {
         return error
     }
 }
+
+// Get brands
+export const getBrands = async (params) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/brands?page=${params.page}&limit=${params.limit}`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Get total brands
+export const getTotalBrands = async () => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/brands/total`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Search brand
+export const searchBrand = async (params) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/brands/search?name=${params}`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Remove brand
+export const deleteBrand = async (brandId) => {
+    try {
+        const result = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/brands/${brandId}`)
+        return result
+    } catch (error) {
+        return error
+    }
+}
+
+// Remove brands
+export const deleteBrands = async (selected) => {
+    try {
+        const result = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/brands/delete`, {selected})
+        return result
+    } catch (error) {
+        return error
+    }
+}
+
+// Create a brand
+export const createBrand = async (brand) => {
+    try {
+        const result = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/brands`, brand, {
+            headers: { "Content-Type": "multipart/form-data"}
+        })
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Get a detailed brand
+export const getBrand = async (brandId) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/brands/${brandId}`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Update a brand
+export const updateBrand = async (brandId, params) => {
+    try {
+        const result = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/brands/${brandId}`, params)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+export const updateLogoBrand = async (brandId, data) => {
+    try {
+        const result = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/brands/${brandId}/upload`, data, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
