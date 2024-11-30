@@ -1,8 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
-const ProductAttribute = require('./attributes');
-const Product = require('./product');
+const Product = require('./products');
 
 var ProductMedia = sequelize.define('product_medias', {
     id: {
@@ -24,6 +23,10 @@ var ProductMedia = sequelize.define('product_medias', {
     },
     variantId: {
         type: DataTypes.INTEGER,
+    },
+    isMain: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
     }
 }, {
     underscored: true,
@@ -33,12 +36,7 @@ var ProductMedia = sequelize.define('product_medias', {
 Product.hasMany(ProductMedia, {
     foreignKey: 'productId',
 });
-ProductMedia.belongsTo(Product);
-
-ProductVariant.hasMany(ProductMedia, {
-    foreignKey: 'variantId',
-});
-ProductMedia.belongsTo(ProductVariant)
+ProductMedia.belongsTo(Product, {as: 'product'});
 
 
 module.exports = ProductMedia;

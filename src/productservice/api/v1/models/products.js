@@ -23,8 +23,19 @@ var Product = sequelize.define('products', {
         unique: true,
         allowNull: false,
     },
-    price: {
+    regularPrice: {
         type: DataTypes.FLOAT,
+        allowNull: false,
+    },
+    salePrice: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0
+    },
+    startSale: {
+        type: DataTypes.TIME,
+    },
+    endSale: {
+        type: DataTypes.TIME
     },
     status: {
         type: DataTypes.ENUM('active', 'inactive'),
@@ -40,9 +51,9 @@ var Product = sequelize.define('products', {
         type: DataTypes.INTEGER,
         defaultValue: 0
     },
-    mainImage: {
-        type: DataTypes.STRING,
-        defaultValue: 'images/'
+    reviewAllowed: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     }
 }, {
     underscored: true,

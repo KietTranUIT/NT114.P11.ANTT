@@ -1,7 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
-const Product = require('./product');
+const Product = require('./products');
+const ProductMedia = require('./media');
 
 // Define table product_variants
 var ProductVariant = sequelize.define('product_variants', {
@@ -13,17 +14,28 @@ var ProductVariant = sequelize.define('product_variants', {
     productId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: Product,
-            key: 'id',
-        }
     },
     stock: {
         type: DataTypes.STRING
     },
-    price: {
+    regularPrice: {
         type: DataTypes.FLOAT,
-    }
+        allowNull: false,
+    },
+    salePrice: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0
+    },
+    startSale: {
+        type: DataTypes.TIME
+    },
+    endSale: {
+        type: DataTypes.TIME
+    },
+    status: {
+        type: DataTypes.ENUM('active', 'inactive'),
+        defaultValue: 'active'
+    },
 }, {
     underscored: true,
     timestamp: true
@@ -33,5 +45,10 @@ Product.hasMany(ProductVariant, {
     foreignKey: 'productId'
 })
 ProductVariant.belongsTo(Product)
+
+ProductVariant.hasMany(ProductMedia, {
+    foreignKey: 'variantId',
+});
+ProductMedia.belongsTo(ProductVariant, { as: 'variant'})
 
 module.exports = ProductVariant;

@@ -1,5 +1,6 @@
 const ErrorObj = require('../models/errors');
 const errorCodes = require('../../../config/errors');
+const slugify = require('slugify');
 
 // Control values in parameter
 module.exports.strongParameters = (params, requires) => {
@@ -26,4 +27,12 @@ module.exports.checkRequiredParameters = (params, requires) => {
         return [false, errors]
     }
     return [true]
+}
+
+// Generate automaticaly slug
+module.exports.generateSlug = (name) => {
+    const slug = slugify(name, {
+        lower: true, strict: true, locale: 'en'
+    })
+    return slug
 }

@@ -17,6 +17,8 @@ const imageMimeTypes = [
     "image/apng"
 ];
 
+const videoMimeTypes = ["video/mp4", "video/x-matroska"]
+
 // Check if a file is accepted base on MIME
 module.exports.checkFileType = (file, fileTypes) => {
     for (let fileType of fileTypes) {
@@ -24,13 +26,26 @@ module.exports.checkFileType = (file, fileTypes) => {
         switch (fileType) {
             case "image":
                 arr = imageMimeTypes
-                break        
+                break
+            case "video":
+                arr = videoMimeTypes
+                break    
         }
         if (arr.includes(file.mimetype)) {
             return true
         }
     }
     return false
+}
+
+// Check if a file is image
+module.exports.isImageFile = (file) => {
+    return imageMimeTypes.includes(file.mimetype)
+}
+
+// Check if a file is video
+module.exports.isVideoFile = (file) => {
+    return videoMimeTypes.includes(file.mimetype)
 }
 
 // Upload file to cloudinary version 1.0.0
@@ -58,6 +73,26 @@ module.exports.uploadFileV101 = async (buffer, folder) => {
     })
     return uploadResult
 }
+
+// Upload file video to cloudinary
+module.exports.uploadVideoBuffer = async (buffer, folder) => {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { 
+            resource_type: 'video',
+            folder
+         }, // Định dạng tài nguyên là video
+        (error, result) => {
+          if (error) {
+            reject(error); // Trả về lỗi nếu có
+          } else {
+            resolve(result); // Trả về kết quả upload thành công
+          }
+        }
+      );
+      stream.end(buffer);
+    });
+  };
 
 // Resize image file
 module.exports.resizeImage = async (buffer, size) => {

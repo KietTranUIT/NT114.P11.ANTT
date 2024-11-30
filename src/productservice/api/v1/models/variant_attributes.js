@@ -2,7 +2,6 @@ const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
 const ProductAttribute = require('./attributes');
-const ProductAttribute = require('./attributes');
 const ProductVariant = require('./variants');
 
 // Define table variant_attributes
@@ -34,10 +33,10 @@ var VariantAttribute = sequelize.define('variant_attributes', {
     }
 }, {
     underscored: true,
-    timestamp: true
+    timestamps: false
 })
 
-ProductVariant.belongsToMany(ProductAttribute, { through: VariantAttribute} )
-ProductAttribute.belongsToMany(ProductVariant, { through: VariantAttribute} )
+ProductVariant.belongsToMany(ProductAttribute, { through: VariantAttribute, as:"variant", foreignKey: 'variantId'} )
+ProductAttribute.belongsToMany(ProductVariant, { through: VariantAttribute, as: "attribute",  foreignKey: 'attributeId'})
 
 module.exports = VariantAttribute;
