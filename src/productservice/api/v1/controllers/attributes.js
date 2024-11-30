@@ -3,6 +3,7 @@ const ProductAttribute = require('./../models/attributes');
 const ErrorObj = require('../models/errors');
 const errorCodes = require('./../../../config/errors');
 
+// Fetch all product attributes api
 module.exports.getAll = async (req, res) => {
     try {
         let attributes = await ProductAttribute.findAll()
@@ -10,6 +11,20 @@ module.exports.getAll = async (req, res) => {
             type: 'attribute',
             len: attributes.length,
             data: attributes
+        })
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+// Get detailed information about product attributes
+module.exports.get = async (req, res) => {
+    try {
+        const { id } = req.params
+        let attribute = await ProductAttribute.findOne({where: {id}})
+        res.status(200).json({
+            type: 'attribute',
+            data: attribute
         })
     } catch (error) {
         res.status(500).json(ErrorObj.createInternalError(error.message))
