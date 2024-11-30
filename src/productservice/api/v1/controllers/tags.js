@@ -2,6 +2,7 @@ const { checkRequiredParameters, strongParameters } = require('../help');
 const Tag = require('./../models/tags');
 const ErrorObj = require('../models/errors');
 const errorCodes = require('./../../../config/errors');
+const slugify = require('slugify');
 
 // Fetch all product attributes api
 module.exports.getAll = async (req, res) => {
@@ -69,14 +70,19 @@ module.exports.create = async (req, res) => {
     }
 }
 
-// Update a product attribute
+// Update a product tag
 module.exports.update = async (req, res) => {
     try {
         const { id } = req.params
-        const params = strongParameters(req.body, ['name', 'description'])
-        let attribute
+        let params = strongParameters(req.body, ['name', 'description'])
+        if (params.name) {
+            params.slug = slugify(params.name, {
+                lower: true, strict: true, locale: 'en'
+            })
+        }
+        let tag
         try {
-            attribute = await ProductAttribute.update(params,{
+            tag = await Tag.update(params,{
                 where: { id },
                 returning: true,
             })
@@ -88,9 +94,9 @@ module.exports.update = async (req, res) => {
             throw err_db
         }
 
-        let data = attribute[0] != 0 ? attribute[1] : {}
+        let data = tag[0] != 0 ? tag[1] : {}
         res.status(200).json({
-            type: 'attribute',
+            type: 'tag',
             data: data
         })
     } catch(error) {
