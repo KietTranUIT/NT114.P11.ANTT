@@ -3,6 +3,19 @@ const ProductAttribute = require('./../models/attributes');
 const ErrorObj = require('../models/errors');
 const errorCodes = require('./../../../config/errors');
 
+module.exports.getAll = async (req, res) => {
+    try {
+        let attributes = await ProductAttribute.findAll()
+        res.status(200).json({
+            type: 'attribute',
+            len: attributes.length,
+            data: attributes
+        })
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
 // Create a product attribute
 module.exports.create = async (req, res) => {
     try {
