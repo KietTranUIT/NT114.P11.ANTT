@@ -12,6 +12,7 @@ var Tag = sequelize.define('tags', {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
     },
     description: {
         type: DataTypes.TEXT,
