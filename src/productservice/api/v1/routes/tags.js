@@ -3,7 +3,7 @@ const router = express.Router();
 
 const tag = require('./../controllers/tags');
 
-// router.get('/:id', attribute.get)
+// router.get('/:id', .get)
 router.post('/', tag.create)
 router.put('/:id', tag.update)
 router.delete('/:id', tag.delete)

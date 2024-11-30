@@ -19,18 +19,18 @@ module.exports.getAll = async (req, res) => {
 }
 
 // Get detailed information about product attributes
-module.exports.get = async (req, res) => {
-    try {
-        const { id } = req.params
-        let attribute = await ProductAttribute.findOne({where: {id}})
-        res.status(200).json({
-            type: 'attribute',
-            data: attribute
-        })
-    } catch (error) {
-        res.status(500).json(ErrorObj.createInternalError(error.message))
-    }
-}
+// module.exports.get = async (req, res) => {
+//     try {
+//         const { id } = req.params
+//         let attribute = await ProductAttribute.findOne({where: {id}})
+//         res.status(200).json({
+//             type: 'attribute',
+//             data: attribute
+//         })
+//     } catch (error) {
+//         res.status(500).json(ErrorObj.createInternalError(error.message))
+//     }
+// }
 
 // Create a product tag
 module.exports.create = async (req, res) => {
