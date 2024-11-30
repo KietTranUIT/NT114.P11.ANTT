@@ -5,5 +5,6 @@ const attribute = require('./../controllers/attributes');
 
 router.post('/', attribute.create)
 router.put('/:id', attribute.update)
+router.delete('/:id', attribute.delete)
 
 module.exports = router;

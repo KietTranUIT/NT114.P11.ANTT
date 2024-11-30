@@ -65,3 +65,22 @@ module.exports.update = async (req, res) => {
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }
+
+// Delete a product attribute
+module.exports.delete = async (req, res) => {
+    try {
+        const { id } = req.params
+        let result
+        try {
+            result = await ProductAttribute.destroy({ where: { id } })
+        } catch(err_db) {
+            if (err_db.name === "SequelizeForeignKeyConstraintError") {
+                const err = new ErrorObj(errorCodes.foreignKeyConstraint, 422, "Violate constraint", "violate foreign key constraint product variant", { pointer: "/variant_attributes/attribute_id"})
+                return res.status(422).json({ errors: [err] })
+            }
+        }
+        res.status(200).json({ message: 'delete successfully.'})
+    } catch (error) {
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
