@@ -1,10 +1,10 @@
 const { DataTypes } = require('sequelize');
-
 const { sequelize } = require('../../../config/db');
 const Product = require('./product');
+const Tag = require('./tags');
 
-// Define table product_variants
-var ProductVariant = sequelize.define('product_variants', {
+// Define table product_tags
+var ProductTag = sequelize.define('product_tags', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -18,20 +18,20 @@ var ProductVariant = sequelize.define('product_variants', {
             key: 'id',
         }
     },
-    stock: {
-        type: DataTypes.STRING
-    },
-    price: {
-        type: DataTypes.FLOAT,
+    tagId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Tag,
+            key: 'id'
+        }
     }
 }, {
     underscored: true,
     timestamp: true
 })
 
-Product.hasMany(ProductVariant, {
-    foreignKey: 'productId'
-})
-ProductVariant.belongsTo(Product)
+Product.belongsToMany(Tag, { through: ProductTag} )
+Tag.belongsToMany(Product, { through: ProductTag} )
 
-module.exports = ProductVariant;
+module.exports = ProductTag;

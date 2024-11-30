@@ -2,8 +2,8 @@ const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
 
-// Define table product_attributes
-var ProductAttribute = sequelize.define('product_attributes', {
+// Define table tags
+var Tag = sequelize.define('tags', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -12,14 +12,18 @@ var ProductAttribute = sequelize.define('product_attributes', {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
     },
     description: {
+        type: DataTypes.TEXT,
+    },
+    slug: {
         type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
     }
 }, {
     underscored: true,
     timestamp: true
 })
 
-module.exports = ProductAttribute;
+module.exports = Tag;

@@ -14,7 +14,7 @@ var ProductMedia = sequelize.define('product_medias', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    m_type: {
+    mType: {
         type: DataTypes.ENUM('image', 'video'),
         allowNull: false,
     },

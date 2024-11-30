@@ -33,10 +33,23 @@ module.exports.checkFileType = (file, fileTypes) => {
     return false
 }
 
-// Upload file to cloudinary
+// Upload file to cloudinary version 1.0.0
 module.exports.uploadFile = async (buffer) => {
     const uploadResult = await new Promise (resolve => {
         cloudinary.uploader.upload_stream({ folder: "brands"}, (error, uploadResult) => {
+            if (error) {
+                return resolve(error)
+            }
+            return resolve(uploadResult)
+        }).end(buffer)
+    })
+    return uploadResult
+}
+
+// Upload file to cloudinary version 1.0.1
+module.exports.uploadFileV101 = async (buffer, folder) => {
+    const uploadResult = await new Promise (resolve => {
+        cloudinary.uploader.upload_stream({ folder }, (error, uploadResult) => {
             if (error) {
                 return resolve(error)
             }

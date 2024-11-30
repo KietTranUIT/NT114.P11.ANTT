@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const { defaultRoute } = require('./../controllers/products');
+const products = require('./../controllers/products');
+const attributeRoutes = require('./attributes');
+const fileMiddleware = require('../middleware/fileUploads');
 
-router.get('/', defaultRoute)
+
+router.use('/attributes', attributeRoutes)
+router.get('/', products.defaultRoute)
+router.post('/', fileMiddleware.uploadMultipleFile('file', 10), products.create)
 
 module.exports = router;
 

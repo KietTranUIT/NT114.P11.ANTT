@@ -10,7 +10,7 @@ var Product = sequelize.define('products', {
         primaryKey: true,
         autoIncrement: true,
     },
-    title: {
+    name: {
         type: DataTypes.STRING,
         unique: true,
         allowNull: false,
@@ -36,12 +36,13 @@ var Product = sequelize.define('products', {
     categoryId: {
         type: DataTypes.INTEGER,
     },
-    discount: {
+    stock: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        defaultValue: 0
     },
-    dis_type: {
-        type: DataTypes.ENUM('fixed', 'percent'),
+    mainImage: {
+        type: DataTypes.STRING,
+        defaultValue: 'images/'
     }
 }, {
     underscored: true,
