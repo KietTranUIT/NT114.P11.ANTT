@@ -7,11 +7,11 @@ const slugify = require('slugify');
 // Fetch all product attributes api
 module.exports.getAll = async (req, res) => {
     try {
-        let attributes = await ProductAttribute.findAll()
+        let tags = await Tag.findAll()
         res.status(200).json({
-            type: 'attribute',
-            len: attributes.length,
-            data: attributes
+            type: 'tag',
+            len: tags.length, 
+            data: tags
         })
     } catch (error) {
         res.status(500).json(ErrorObj.createInternalError(error.message))
