@@ -149,6 +149,18 @@ export const getBrands = async (params) => {
     }
 }
 
+// Get all brands version 2
+export const getBrandsV2 = async (params) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/brands`, {
+            params
+        })
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
 // Get total brands
 export const getTotalBrands = async () => {
     try {
@@ -225,6 +237,28 @@ export const updateLogoBrand = async (brandId, data) => {
     try {
         const result = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/brands/${brandId}/upload`, data, {
             headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Get all product attributes
+export const getProductAttributes = async () => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products/attributes/`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Create a product
+export const createProduct = async (formData) => {
+    try {
+        const result = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/products`, formData, {
+            headers: { "Content-Type": "multipart/form-data"}
         })
         return result.data
     } catch (error) {

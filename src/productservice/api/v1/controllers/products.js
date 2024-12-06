@@ -22,14 +22,19 @@ const whiteListProductCreationParams = [
 ]
 
 // List params is allowed when create a product variant
-const whiteListVariantCreationPrams = [
-    'regularPrice', 'salePrice', 'startSale', 'endSale', 'stock', 'status', 'attributeId', 'value'
+const whiteListVariantCreationParams = [
+    'regularPrice', 'salePrice', 'startSale', 'endSale', 'stock', 'status', 'attributes'
+]
+
+// List params is allowed when create variant attribute
+const whiteListAttributeVariantCreationParams = [
+    'attributeId', 'value'
 ]
 
 // Create a product
 module.exports.create = async (req, res) => {
     try {
-        // Get product params
+        // Get product params in form data
         let productData
         try {
             productData = JSON.parse(req.body.product)
@@ -38,10 +43,10 @@ module.exports.create = async (req, res) => {
             return res.status(400).json({ errors : [errobj]})
         }
         // Checking of params is required
-        if ( !checkRequiredParameters(productData, ['name', 'regularPrice'][0])) {
+        if ( !checkRequiredParameters(productData, ['name', 'regularPrice'])[0]) {
             return res.status(422).json({ errors: data[1]})
         }
-        // Filter params
+        // Ignore all params is not in whitelist
         const productParams = strongParameters(productData, whiteListProductCreationParams)
         // Check if don't have slug
         if (!productParams.slug) {
@@ -52,6 +57,7 @@ module.exports.create = async (req, res) => {
         let variantParams = []
         let variant_errs = []
         if (req.body.variant) {
+            // Get variant params in form data
             let variantData
             try {
                 variantData = JSON.parse(req.body.variant)
@@ -63,17 +69,31 @@ module.exports.create = async (req, res) => {
                 const errobj = new ErrorObj(errorCodes.invalidData, 400, "Invalid data", "variant form data invalid.", { pointer: "/variant" })
                 return res.status(400).json({ errors: [errobj] })
             }
-            variantData.map((params) => {
-                const check = checkRequiredParameters(params, ['attributeId', 'value'])
-                if (!check) {
+            variantData.map((variant) => {
+                // Checking of params is required in variant data
+                const check = checkRequiredParameters(variant, ['attributes'])
+                if (!check[0]) {
                     variant_errs.push(check[1])
                     return
                 }
-                let strongParams = strongParameters(params, whiteListVariantCreationPrams)
-                if (!strongParams.regularPrice) {
-                    strongParams.regularPrice = productParams.regularPrice
+
+                // Ignore all params is not in whitelist
+                let strongVariantParams = strongParameters(variant, whiteListVariantCreationParams)
+                // Set variant regular price is product price if it is not exists
+                if (!strongVariantParams.regularPrice) {
+                    strongVariantParams.regularPrice = productParams.regularPrice
                 }
-                variantParams.push(strongParams)
+
+                // Checking of params is required in attribute variant
+                strongVariantParams.attributes.map((attribute) => {
+                    const check = checkRequiredParameters(attribute, ['attributeId', 'value'])
+                    if (!check[0]) {
+                        variant_errs.push(check[1])
+                        return
+                    }
+                })
+                variantParams.push(strongVariantParams)
+                
             })
         }
         if (variant_errs.length > 0) {
@@ -99,8 +119,8 @@ module.exports.create = async (req, res) => {
             }
         })
         if (flag) {
-            const file_err = new ErrorObj(errorCodes.missingField, 422, 'Missing file', 'must be east 1 file image.', { pointer: '/file'})
-            return res.status(422).json({ errors: file_err})
+            const file_err = new ErrorObj(errorCodes.missingField, 422, 'Missing file', 'phải có ít nhất một file hình ảnh', { pointer: '/file'})
+            return res.status(422).json({ errors: [file_err]})
         }
 
         if (file_errs.length > 0) {
@@ -144,14 +164,21 @@ module.exports.create = async (req, res) => {
             // Create record on product_variants table
             if (variantParams.length > 0) {
                 for(let i = 0; i < variantParams.length; i++) {
-                    let attributeId = variantParams[i].attributeId
-                    let value = variantParams[i].value
-                    delete variantParams.attributeId
-                    delete variantParams.value
+                    let attributeParams = variantParams[i].attributes
+                    delete variantParams[i].attributes
                     variantParams[i].productId = product.id
                     let variant = await ProductVariant.create(variantParams[i], { transaction })
-                    const detail = await VariantAttribute.create({variantId: variant.id, attributeId, value}, { transaction })
-                    variants.push({ variant, detail })
+
+                    let attributes = []
+                    for (let j = 0; j < attributeParams.length; j++) {
+                        const variant_attribute = await VariantAttribute.create({
+                            variantId: variant.id,
+                            attributeId: attributeParams[i].attributeId,
+                            value: attributeParams[i].value
+                        }, { transaction })
+                        attributes.push(variant_attribute)
+                    }
+                    variants.push({ variant, attributes })
                 }                
             }
 

@@ -1,321 +1,419 @@
 import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
-import "./listproduct.css";
+import { useState, useEffect } from "react";
+import { formatTimeStamp, deleteBrand, deleteBrands, searchBrand, getBrands, getTotalBrands } from "./../../helpers";
+import { useNavigate } from "react-router-dom";
+import { debounce, set } from "lodash"
+import { usePagination, DOTS } from "../../helpers/pagination";
+import Loading from "../../components/loading/loading";
+import Modal from "../../components/modal/modal";
+import Backpage from "../../components/backpage/backpage";
+import AddProduct from "./AddProduct";
 
 function ListProducts() {
-    return (
-        <>
+  const [brands, setBrands] = useState([[]])
+  const [page, setPage] = useState('product')
+  const [searchResult, setSearchResult] = useState([])
+  const [pagination, setPagination] = useState({
+        totalCount: 0,
+        siblingCount: 1,
+        currentPage: 1,
+        pageSize: 20,
+  })
+  const [indexBrand, setIndexBrand] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [modalContent, setModalContent] = useState({ type: '', title: '', message: ''})
+  let paginationRange = usePagination(pagination)
+
+    // Loading list brands access page
+    useEffect(() => {
+        // // Fetch brands
+        // const fetchBrands = async () => {
+        //     // Get total brands
+        //     const result1 = await getTotalBrands()
+        //     setPagination({ ...pagination, totalCount: result1.total})
+
+        //     const totalPageNumbers = Math.ceil(result1.total / pagination.pageSize)
+
+        //     const initBrands = []
+        //     for(let i = 0; i < totalPageNumbers; i++) {
+        //         initBrands.push([])
+        //     }
+        
+        //     const result = await getBrands({ page: pagination.currentPage, limit: pagination.pageSize })
+        //     initBrands[pagination.currentPage - 1] = result.data
+        //     return initBrands
+        // }
+        // fetchBrands().then((data) => {
+        //     setBrands(data)
+        //     setIsLoading(false)
+        // })
+    },[])
+
+    // Navigate to add brand page when click
+    const handleAddProduct = () => {
+        setPage('addproduct')
+    }
+
+    // Handle click on edit category
+    const handleEditBrand = (event) => {
+        const brandId = event.currentTarget.dataset.id
+        setIndexBrand(brandId)
+        setPage('detailbrand')
+    }
+
+    // Handle click on remove brand
+    const handleRemoveBrand = async (event) => {
+        const brandId = event.currentTarget.dataset.id
+        
+        // remove brand api
+        const result = await deleteBrand(brandId)
+        if (result.status != 200) {
+            setModalContent({ type:'error', title:'Lỗi', message:`${result.response.data.errors[0].detail}`})
+            setShowModal(true)
+        } else {
+            setModalContent({ type:'success', title:'Thành công', message:`Thương hiệu #${brandId} đã xóa thành công!`})
+            setShowModal(true)
+        }
+        
+    }
+
+    // Handle remove selected brands
+    const handleRemoveSelectedBrands = async (event) => {
+        event.preventDefault()
+
+        const inputs = document.getElementsByClassName('select-remove-input')
+        let selected = []
+        for (let i = 0; i < inputs.length; i++) {
+            if (inputs[i].checked) {
+                selected.push(inputs[i].value)
+            }
+        }
+        if (selected.length <= 0) {
+            alert('Please select a brand to delete')
+        } else {
+            const result = await deleteBrands(selected)
+            if (result.status == 200) {
+                setModalContent({ type:'success', title:'Thành công', message:`Đã xóa thành công!`})
+                setShowModal(true)
+            } else {
+                setModalContent({ type:'error', title:'Lỗi', message:`${result.response.data.errors[0].detail}`})
+                setShowModal(true)
+            }
+        }
+    }
+
+    // Handle click on input check all
+    const handleInputCheckAll = (event) => {
+        const inputs = document.getElementsByClassName('select-remove-input')
+
+        if (event.currentTarget.checked) {
+            for (const input of inputs) {
+                input.checked = true
+            }
+            return
+        }
+        for (const input of inputs) {
+            input.checked = false
+        }
+    }
+
+    const handleSearch = async (query) => {
+        const result = await searchBrand(query)
+        if (!(result instanceof Error)) {
+            if (result.data.length <= 0) {
+                setSearchResult([])
+            } else {
+                setSearchResult(result.data)
+            }
+        }
+    }
+
+    const debouncedSearch = debounce(handleSearch, 500)
+
+    // Search category
+    const handleSearchChange = (event) => {
+        const dropdown = document.getElementById('dropdown-element')
+        dropdown.classList.remove('d-none')
+        debouncedSearch(event.target.value)
+    }
+
+    // Handle on change page
+    const handleChangePage = async (event) => {
+        const pageNumber = parseInt(event.currentTarget.dataset.page) 
+        if (brands[pageNumber - 1].length == 0) {
+            // Fetch brands
+            const result = await getBrands({ page: pageNumber, limit: pagination.pageSize })
+            let copyBrands = brands
+            copyBrands[pageNumber - 1] = result.data
+            setBrands((brds) => copyBrands)
+        }
+
+        setPagination({ ...pagination, currentPage: pageNumber})
+        
+    }
+
+    // Close result search
+    const handleCloseSearch = (event) => {
+        const dropdown = document.getElementById('dropdown-element')
+        dropdown.classList.add('d-none')
+
+        const searchInput = document.getElementById('search-input')
+        searchInput.value = ''
+    }
+
+    // On click previous
+    const handlePrevClick = async (event) => {
+        const pageNumber = pagination.currentPage - 1
+        if (pageNumber <= 0) {
+            return
+        }
+
+        if (brands[pageNumber - 1].length == 0) {
+            // Fetch brands
+            const result = await getBrands({ page: pageNumber, limit: pagination.pageSize })
+            let copyBrands = brands
+            copyBrands[pageNumber - 1] = result.data
+            setBrands((brds) => copyBrands)
+        }
+        setPagination({ ...pagination, currentPage: pageNumber})
+    }
+
+    // On click next
+    const handleNextClick = async (event) => {
+        const totalPageNumbers = Math.ceil(pagination.totalCount / pagination.pageSize)
+        const pageNumber = pagination.currentPage + 1
+        if (pageNumber > totalPageNumbers) {
+            return
+        }
+
+        if (brands[pageNumber - 1].length == 0) {
+            // Fetch brands
+            const result = await getBrands({ page: pageNumber, limit: pagination.pageSize })
+            let copyBrands = brands
+            copyBrands[pageNumber - 1] = result.data
+            setBrands((brds) => copyBrands)
+        }
+        setPagination({ ...pagination, currentPage: pageNumber})
+  }
+  return (
+    <>
+        { isLoading ? (
+            <Loading />
+          ) : (
+          <>
+            { showModal && (
+            <Modal handleCloseModal={() => setShowModal(false)} 
+                message={modalContent.message} 
+                title={modalContent.title}
+                type={modalContent.type}
+                />
+            )}
+          </>
+        )}
         <Header />
-        <Panel />
-            <div className="content">
-                <div className="mb-9">
+        <Panel navId={'products-nav'}/>
+          <div className="content">
+          {showModal && (
+                <div className="modal-backdrop fade show"></div>
+            )}
+            { !(page === 'product') ? (
+              <>
+                <Backpage handleOnBack={() => setPage('product')}/>
+                  { (page === 'addproduct') ? (
+                    <AddProduct />
+                  ):(
+                    <></>
+                  )}
+              </>
+            ) : (
+              <>
+                <div className="mb-5">
+                  <div className="mb-4">
+                    <h2 className="fw-bold" style={{ color:"#007bff"}}>Sản phẩm</h2>
+                  </div>
+                  <ul className="nav nav-links mx-n3 mb-3">
+                    <li className="nav-item">
+                      <a className="pl-0 text-decoration-none text-dark fw-semibold" style={{fontSize: "13px"}} aria-current="page" href="#">
+                        <span style={{color: "#0d6efd"}}>Tất cả </span>
+                        <span style={{color: "#0d6efd"}}>({pagination.totalCount})</span>
+                      </a>
+                    </li>
+                  </ul>
+                  <div id="products">
                     <div className="mb-4">
-                        <h2>Products</h2>
-                    </div>
-                </div>
-                <ul className="nav nav-links mx-n3 mb-3">
-                    <li className="nav-item">
-                        <a className="nav-link" aria-current="page" href="#">
-                            <span className="fw-semibold">All </span>
-                            <span>(68817)</span>
-                        </a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" aria-current="page" href="#">
-                            <span className="fw-semibold">Published </span>
-                            <span>(70348)</span>
-                        </a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" aria-current="page" href="#">
-                            <span className="fw-semibold">Draft </span>
-                            <span>(17)</span>
-                        </a>
-                    </li>
-                    <li className="nav-item">
-                        <a className="nav-link" aria-current="page" href="#">
-                            <span className="fw-semibold">On discount </span>
-                            <span>(810)</span>
-                        </a>
-                    </li>
-                </ul>
-                <div id="products">
-                    <div className="mb-4">
-                        <div className="d-flex gap-5">
-                            <div className="search-box">
-                                <form id="form1">
-                                    <div className="input-group d-flex">
-                                        <div className="form-outline">
-                                            <input type="search" id="form1" className="form-control" placeholder="search"/>
-                                        </div>
-                                        <button type="button" className="btn btn-primary">
-                                            search
-                                        </button>
-                                    </div>
-                                </form>
+                      <div className="d-flex justify-content-between">
+                        <div className="search-box">
+                          <form id="form1">
+                            <div className="input-group d-flex flex-column">
+                              <div className="d-flex align-items-center position-relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16px" height="16px" className="position-absolute ms-3">
+                                  <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
+                                </svg>
+                                <input type="search" id="search-input" className="form-control" placeholder="Tìm kiếm thương hiệu" onChange={handleSearchChange}/>
+                              </div>
                             </div>
-                            <div className="scrollbar overflow-hidden-y">
-                                <div className="d-flex gap-3">
-                                    <div className="input-group mb-2">
-                                        <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                                            Category
-                                        </button>
-                                        <ul className="dropdown-menu">
-                                            <li><a className="dropdown-item" href="#">Action</a></li>
-                                            <li><a className="dropdown-item" href="#">Another action</a></li>
-                                            <li><a className="dropdown-item" href="#">Something else here</a></li>
-                                            <li>
-                                                <hr className="dropdown-divider" />
-                                            </li>
-                                            <li><a className="dropdown-item" href="#">Separated link</a></li>
-                                        </ul>
-                                    </div>
-                                    <div className="input-group mb-2">
-                                        <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                                            Brand
-                                        </button>
-                                        <ul className="dropdown-menu">
-                                            <li><a className="dropdown-item" href="#">Action</a></li>
-                                            <li><a className="dropdown-item" href="#">Another action</a></li>
-                                            <li><a className="dropdown-item" href="#">Something else here</a></li>
-                                            <li>
-                                                <hr className="dropdown-divider" />
-                                            </li>
-                                            <li><a className="dropdown-item" href="#">Separated link</a></li>
-                                        </ul>
-                                    </div>
-                                    <div className="input-group mb-2">
-                                        <button className="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                                            Brand
-                                        </button>
-                                        <ul className="dropdown-menu">
-                                            <li><a className="dropdown-item" href="#">Action</a></li>
-                                            <li><a className="dropdown-item" href="#">Another action</a></li>
-                                            <li><a className="dropdown-item" href="#">Something else here</a></li>
-                                            <li>
-                                                <hr className="dropdown-divider" />
-                                            </li>
-                                            <li><a className="dropdown-item" href="#">Separated link</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <button type="button" className="btn btn-primary">
-                                    <span className="fw-bold">+ </span>Add product
-                                </button>
+                          </form>
+                        </div>
+                        <div className="d-flex gap-2">
+                          <button type="button" className="btn btn-danger" onClick={handleRemoveSelectedBrands}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                              <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                            </svg>
+                          </button>
+                          <button type="button" className="btn btn-primary" onClick={handleAddProduct}>
+                            <span className="fw-bold">+ </span>Thêm
+                          </button>
+                        </div>
+                      </div>
+                        <div className="dropdown-search d-none" id="dropdown-element">
+                          <div className="dropdown-search-header">
+                            <span>brands</span>
+                            <button type="button" class="btn-close btn-close-white" aria-label="Close" onClick={handleCloseSearch}></button>
+                          </div>
+                          <div id="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <ul className="nav p-3 row">
+                              { searchResult.length == 0 ? (
+                                <li className="nav-item pb-2 col-12 mb-2">
+                                  not found
+                                </li>
+                                ) : ( 
+                                <>
+                                  { searchResult.map((item, index) => {
+                                      return (
+                                        <li className="nav-item pb-2 col-12 mb-2">
+                                          <a className="d-flex gap-3 text-decoration-none text-reset">
+                                            <img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1731375811/brands/uqt9gebkizucgxlq71eh.jpg" width="70px" height="70px"></img>
+                                            <div>
+                                              <span className="fw-bold">{item.name}</span>
+                                              <p className="text-truncate" style={{maxWidth:"400px"}}>{item.description}</p>
+                                            </div>
+                                          </a>
+                                        </li>
+                                      )
+                                  })}
+                                </>
+                                        
+                                    )}
+                                </ul>
                             </div>
                         </div>
                     </div>
-                    <div style={{marginLeft:"-30px",paddingLeft:"30px", marginRight:"-30px", paddingRight:"30px", fontSize:"13px"}} className="bg-white border-top border-bottom border-translucent position-relative top-1">
+                    <div style={{fontSize:"13px"}} className="tablezone bg-white border-top border-bottom border-translucent position-relative top-1">
                         <div className="table-responsive scrollbar">
                             <table className="table fs-9 mb-0">
                                 <thead>
                                     <tr className="" style={{fontSize:"13px"}}>
                                         <th className="white-space-nowrap fs-9 align-middle pl-1" style={{maxWidth:"20px",width:"18px"}}>
                                             <div className="form-check mb-0 fs-8">
-                                                <input className="form-check-input" id="checkbox-bulk-products-select" type="checkbox" data-bulk-select="{&quot;body&quot;:&quot;products-table-body&quot;}" />
+                                                <input className="form-check-input" id="checkbox-bulk-products-select" type="checkbox" data-bulk-select="{&quot;body&quot;:&quot;products-table-body&quot;}" onClick={handleInputCheckAll}/>
                                             </div>
                                         </th>
-                                        <th className="sort white-space-nowrap align-middle fs-10" scope="col" style={{width:"70px"}}></th>
-                                        <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width:"350px"}} data-sort="product">PRODUCT NAME</th>
-                                        <th className="sort align-middle text-end ps-4" scope="col" data-sort="price" style={{width:"150px"}}>PRICE</th>
-                                        <th className="sort align-middle ps-4" scope="col" data-sort="category" style={{width:"150px"}}>CATEGORY</th>
-                                        <th className="sort align-middle ps-3" scope="col" data-sort="tags" style={{width:"230px"}}>TAGS</th>
-                                        <th className="sort align-middle fs-8 text-center ps-4" scope="col" style={{width:"125px"}}></th>
-                                        <th className="sort align-middle ps-4" scope="col" data-sort="vendor" style={{width:"200px"}}>VENDOR</th>
-                                        <th className="sort align-middle ps-4" scope="col" data-sort="time" style={{width:"70px"}}>PUBLISHED ON</th>
+                                        <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width:"150px"}} data-sort="brand">
+                                            TÊN
+                                            <a onClick={(event) => {
+                                                console.log(brands)
+                                                event.preventDefault()
+                                                let copy = brands
+                                                copy[pagination.currentPage - 1].sort((a, b) => a.name.localeCompare(b.name));
+                                                setBrands(copy)
+                                                console.log(copy)
+                                            }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="gray" width="12px" height="12px" className="ms-1 mb-1">
+                                                    <path d="M137.4 41.4c12.5-12.5 32.8-12.5 45.3 0l128 128c9.2 9.2 11.9 22.9 6.9 34.9s-16.6 19.8-29.6 19.8L32 224c-12.9 0-24.6-7.8-29.6-19.8s-2.2-25.7 6.9-34.9l128-128zm0 429.3l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8l256 0c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128c-12.5 12.5-32.8 12.5-45.3 0z"/>
+                                                </svg>
+                                            </a>
+                                        </th>
+                                        <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width:"150px"}} data-sort="brand">LOGO</th>
+                                        <th className="sort" scope="col" data-sort="price" style={{width:"395px"}}>MÔ TẢ</th>
+                                        <th className="sort" scope="col" data-sort="tags" style={{width:"155px"}}>
+                                            NGÀY CHỈNH SỬA
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="gray" width="12px" height="12px" className="ms-1 mb-1">
+                                                <path d="M137.4 41.4c12.5-12.5 32.8-12.5 45.3 0l128 128c9.2 9.2 11.9 22.9 6.9 34.9s-16.6 19.8-29.6 19.8L32 224c-12.9 0-24.6-7.8-29.6-19.8s-2.2-25.7 6.9-34.9l128-128zm0 429.3l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8l256 0c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128c-12.5 12.5-32.8 12.5-45.3 0z"/>
+                                            </svg>
+                                        </th>
+                                        <th className="sort fs-8" scope="col" style={{width:"155px"}}>
+                                            NGÀY TẠO
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="gray" width="12px" height="12px" className="ms-1 mb-1">
+                                                <path d="M137.4 41.4c12.5-12.5 32.8-12.5 45.3 0l128 128c9.2 9.2 11.9 22.9 6.9 34.9s-16.6 19.8-29.6 19.8L32 224c-12.9 0-24.6-7.8-29.6-19.8s-2.2-25.7 6.9-34.9l128-128zm0 429.3l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8l256 0c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128c-12.5 12.5-32.8 12.5-45.3 0z"/>
+                                            </svg>
+                                        </th>
                                         <th className="sort text-end align-middle pe-0 ps-4" scope="col"></th>
                                     </tr>
                                 </thead>
                   <tbody className="list" id="products-table-body">
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
+                  { brands[pagination.currentPage - 1].map((item, index) => (
+                        <tr className="position-static">
+                            
+                        <td className="fs-9 align-middle">
+                          <div className="form-check mb-0 fs-8">
+                            <input value={item.id} className="form-check-input select-remove-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
                         </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
+                        <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">{item.name}</a></td>
+                        <td className="product align-middle ps-4">
+                            <img className="p-2 border" src={item.logo} alt="error!" width="90px" height="90px"></img>
                         </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
+                        <td className="align-middle white-space-nowrap text-body-quaternary fs-9 fw-semibold">{item.description}</td>
+                        <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.updatedAt)}</td>
+                        <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.createdAt)}</td>
+                        <td>
+                            <div className="d-flex gap-2 justify-content-center m-3">
+                                <button className="btn btn-primary" data-id={item.id} onClick={handleEditBrand}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+                                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                                    </svg>
+                                </button>
+                                <button className="btn btn-danger" data-id={item.id} onClick={handleRemoveBrand}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
-                        </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
-                        </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
-                    <tr className="position-static">
-                      <td className="fs-9 align-middle">
-                        <div className="form-check mb-0 fs-8"><input className="form-check-input" type="checkbox" data-bulk-select-row="{&quot;product&quot;:&quot;Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands...&quot;,&quot;productImage&quot;:&quot;/products/1.png&quot;,&quot;price&quot;:&quot;$39&quot;,&quot;category&quot;:&quot;Plants&quot;,&quot;tags&quot;:[&quot;Health&quot;,&quot;Exercise&quot;,&quot;Discipline&quot;,&quot;Lifestyle&quot;,&quot;Fitness&quot;],&quot;star&quot;:false,&quot;vendor&quot;:&quot;Blue Olive Plant sellers. Inc&quot;,&quot;publishedOn&quot;:&quot;Nov 12, 10:45 PM&quot;}" /></div>
-                      </td>
-                      <td className="align-middle white-space-nowrap py-0"><a className="d-block border border-translucent rounded-2" href="../../../apps/e-commerce/landing/product-details.html"><img src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1732158837/public/test_gu6ynz.png" alt="" width="53" /></a></td>
-                      <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; ...</a></td>
-                      <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">$39</td>
-                      <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">Plants</td>
-                      <td className="tags align-middle review pb-2 ps-3" style={{minWidth:"225px"}}>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Health</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Exercise</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Discipline</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Lifestyle</span></a>
-                        <a className="text-decoration-none" href="#!"><span className="badge badge-tags me-2 mb-2" style={{backgroundColor: "#e3e6ed", fontSize: "12px", color: "#000000", fontWeight:600}}>Fitness</span></a>
-                        </td>
-                      <td className="align-middle review fs-8 text-center ps-4">
-                        <div className="d-toggle-container">
-                          <div className="d-block-hover">
-                            <svg width="20px" className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg="">
-                                <path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path>
-                            </svg>
-                        </div>
-                          <div className="d-none-hover d-none"><svg className="svg-inline--fa fa-star text-warning" aria-hidden="true" focusable="false" data-prefix="far" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"></path></svg></div>
-                        </div>
-                      </td>
-                      <td className="vendor align-middle text-start fw-semibold ps-4"><a href="#!">Blue Olive Plant sellers. Inc</a></td>
-                      <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">Nov 12, 10:45 PM</td>
-                    </tr>
+                      </tr>
+                    ))}
                     </tbody>
                 </table>
               </div>
               <div className="row align-items-center justify-content-between py-2 pe-0 fs-9">
                 <div className="col-auto d-flex align-items-center">
-                  <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body" data-list-info="data-list-info">1 to 10 <span className="text-body-tertiary"> Items of </span>16</p><a className="fw-semibold text-decoration-none" href="#!" data-list-view="*">View all<svg width="7px" className="svg-inline--fa fa-angle-right ms-1" data-fa-transform="down-1" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="angle-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg="" style={{transformOrigin: "0.3125em 0.5625em"}}><g transform="translate(160 256)"><g transform="translate(0, 32)  scale(1, 1)  rotate(0 0 0)"><path fill="currentColor" d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" transform="translate(-160 -256)"></path></g></g></svg></a><a className="fw-semibold d-none" href="#!" data-list-view="less">View Less<svg className="svg-inline--fa fa-angle-right ms-1" data-fa-transform="down-1" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="angle-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg="" style={{transformOrigin: "0.3125em 0.5625em"}}><g transform="translate(160 256)"><g transform="translate(0, 32)  scale(1, 1)  rotate(0 0 0)"><path fill="currentColor" d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" transform="translate(-160 -256)"></path></g></g></svg></a>
+                  <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body" data-list-info="data-list-info">{(pagination.currentPage - 1)*pagination.pageSize + 1} to {brands[pagination.currentPage - 1].length} <span style={{color:"gray", fontSize:"11px"}}>Items of</span> {pagination.totalCount}</p>
                 </div>
-                <div className="col-auto d-flex"><button className="page-link disabled" data-list-pagination="prev" disabled=""><svg className="svg-inline--fa fa-chevron-left" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"></path></svg></button>
-                  <ul className="mb-0 pagination d-flex gap-1">
-                    <li className="active">
-                        <button className="btn btn-primary page" type="button" data-i="1" data-page="10">1</button></li>
-                    <li>
-                        <button className="btn page" type="button" data-i="2" data-page="10">2</button></li>
-                    </ul><button className="page-link pe-0" data-list-pagination="next"><svg className="svg-inline--fa fa-chevron-right" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"></path></svg></button>
+                <div className="col-auto d-flex gap-2">
+                    <button className="page-link" style={{border:"none",backgroundColor:"transparent"}} data-list-pagination="prev" onClick={handlePrevClick}>
+                        <svg className="svg-inline--fa fa-chevron-left" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" width="16px" height="16px">
+                            <path fill="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"></path>
+                        </svg>
+                    </button>
+                    <ul class="mb-0 pagination btn-group d-flex gap-1">
+                        { paginationRange.map((pageNumber) => {
+                            if (pageNumber === DOTS) {
+                                return <li className="btn">&#8230;</li>;
+                            }
+                            return (
+                                <li>
+                                    <button className={ pageNumber === pagination.currentPage ? "btn btn-primary":"btn btn-outline-primary"} type="button" data-page={pageNumber} onClick={handleChangePage}>{pageNumber}</button>
+                                </li>
+                            )
+
+                        })}
+                    </ul>
+                    <button className="p-0" style={{border:"none",backgroundColor:"transparent"}} data-list-pagination="next" disabled="" onClick={handleNextClick}>
+                        <svg class="svg-inline--fa fa-chevron-right" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" fill="currentColor" width="16px" height="16px">
+                            <path fill="currentColor" d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"></path>
+                        </svg>
+                    </button>
                 </div>
               </div>
             </div>
                 </div>
-            </div>
+                </div>
+                    </>
+                )}
+          </div>
         </>
     )
 }

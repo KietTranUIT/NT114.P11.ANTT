@@ -37,23 +37,35 @@ module.exports.count = async (req, res) => {
     }
 }
 
+const getBrandsParamsWhitelist = ['page', 'limit', 'search', 'sort', 'order','field']
+
 // Get brands pagination
 module.exports.getAll = async (req, res) => {
     try {
-        let { page = 1, limit = 10 } = req.query
-        page = parseInt(page, 10)
-        limit = parseInt(limit, 10)
-        if (page === NaN || page <= 0) page = 1
-        if (limit === NaN || limit < 0) limit = 0
+        let queries = help.strongParameters(req.query, getBrandsParamsWhitelist)
+        let option = {
+            offset: (queries.page && queries.limit) ? (queries.page - 1) * queries.limit : undefined,
+            limit: (queries.page && queries.limit) ? (queries.limit) : undefined,
+            order: [
+                [`${queries.sort ? (queries.sort):('id')}`, `${queries.order ? (queries.order):('ASC')}`]
+            ],
+        }
+        if (queries.search) {
+            option.where = {
+                name: {
+                    [sequelize.Op.iLike]: `%${queries.search}%`
+                }
+            }
+        }
+        if (queries.field) {
+            const fields = help.parseField(queries.field, 'brand')
+            if (fields != null) {
+                option.attributes = fields
+            }
+        }
 
         // Get brands
-        const brands = await Brand.findAll({
-            offset: (page - 1) * limit,
-            limit: limit,
-            order: [
-                ['id', 'ASC']
-            ],
-        })
+        const brands = await Brand.findAll(option)
 
         res.status(200).json({
             type: 'brand',
@@ -61,6 +73,7 @@ module.exports.getAll = async (req, res) => {
             data: brands
         })
     } catch (error) {
+        console.log(error)
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }

@@ -21,11 +21,18 @@ module.exports.services = [
         target: "http://localhost:9005/",
         paths: [],
         rewrite: '/brands/'
+    },
+    {
+        route: "/products",
+        target: "http://localhost:9005",
+        paths: [],
+        rewrite: '/products/',
     }
 ]
 
 module.exports.serviceIdentity = {
     "/users": 0,
     "/categories": 1,
-    "/brands": 2
+    "/brands": 2,
+    "/products":3
 }

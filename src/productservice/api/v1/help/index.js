@@ -36,3 +36,20 @@ module.exports.generateSlug = (name) => {
     })
     return slug
 }
+
+const validFieldBrands = ['id', 'name', 'description', 'logo', 'slug', 'createdAt', 'updatedAt']
+// Split field from multiple fields query
+module.exports.parseField = (fieldQuery, resource) => {
+    if (!fieldQuery) return null
+    const fields = fieldQuery.split(',');
+    let sanitizedFields
+    switch (resource) {
+        case 'brand':
+            sanitizedFields = fields.filter(field => validFieldBrands.includes(field));
+            break
+        default:
+            sanitizedFields = [] 
+    }
+    
+    return sanitizedFields.length > 0 ? sanitizedFields : null;
+}

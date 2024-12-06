@@ -8,3 +8,11 @@
     padding-right: 30px;
     background-color: #f5f7fa;
 }
+
+.detail-onClick {
+    color: "red";
+}
+
+.detail-reset {
+    color: "black";
+}
