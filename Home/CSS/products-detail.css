@@ -5,7 +5,17 @@ body {
     background-color: #f7f7f7;
 }
 
+/* Container chính chứa mọi thứ */
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Chiều cao tối thiểu = chiều cao màn hình */
+}
 
+/* Nội dung chính chiếm hết không gian ở giữa */
+main {
+    flex: 1; /* Đẩy footer xuống */
+}
 
 .head-container {
     display: flex; /* Sử dụng flexbox để căn chỉnh theo hàng */
