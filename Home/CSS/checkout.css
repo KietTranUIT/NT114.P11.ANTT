@@ -1,0 +1,300 @@
+/* General styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+}
+
+/* Container chính chứa mọi thứ */
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Chiều cao tối thiểu = chiều cao màn hình */
+}
+
+/* Nội dung chính chiếm hết không gian ở giữa */
+main {
+    flex: 1; /* Đẩy footer xuống */
+    margin: 0 301px;
+}
+
+.head-container {
+    display: flex; /* Sử dụng flexbox để căn chỉnh theo hàng */
+    justify-content: space-between; /* Căn giữa các phần tử */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    padding: 10px 20px; /* Khoảng cách bên trong cho header */
+    background-color: #f8f8f8; /* Màu nền cho header */
+    width: 100%;
+    max-width: auto;
+    margin: 0  340.5px 0 340.5px;
+}
+
+/* Header */
+header {
+    background-color: #f8f8f8;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+}
+
+.logo h1 {
+    color: #ff6600;
+    font-size: 28px;
+    margin: 0;
+}
+
+.search-bar input {
+    padding: 10px;
+    width: 600px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+}
+
+.user-actions a {
+    text-decoration: none;
+    color: #333;
+    margin-left: 20px;
+    font-size: 14px;
+}
+
+.user-actions a:hover {
+    color: #ff6600;
+}
+
+
+
+/* bỏ gạch chân */
+a{text-decoration: none;}
+
+
+
+
+/* main */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f8f8;
+}
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: #f8f8f8;
+    padding: 20px;
+
+}
+
+.container h1{
+    margin-bottom: 20px;
+}
+
+
+
+.checkout-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+
+
+.checkout-table td {
+    text-align: left;
+    padding: 8px;
+    
+}
+
+.checkout-table h3{
+    font-size: 15px;
+}
+.checkout-table h5{
+    font-size: 15px;
+    font-weight: 100;
+}
+
+.hr{
+    margin: 40px 0;
+}
+
+
+
+
+
+
+
+
+
+
+.delivery-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.delivery-option {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f7f9fc;
+}
+
+.delivery-option:hover {
+    border-color: #007bff;
+    background-color: #e9f2ff;
+}
+
+.delivery-option.selected {
+    border-color: #007bff;
+    background-color: #e9f2ff;
+}
+
+.button {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Footer */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.footer {
+    background-color: #dee2e9;
+    padding: 40px 0;
+    color: #333;
+}
+
+.footer-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr; /* Cột logo chiếm gấp đôi (2fr) */
+    gap: 40px; /* Khoảng cách giữa các cột */
+    margin: 0 340.5px 0 340.5px;
+    padding: 0 16px;
+    max-width: 1600px;
+}
+
+
+
+.footer h3 {
+    color: #ff6600;
+    font-size: 26.18px;
+    margin-left: 8px;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.footer h4 {
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-weight: 800;
+    line-height: 16px;
+}
+
+
+
+.footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer ul li {
+    margin-bottom: 10px;
+}
+
+.footer ul li a {
+    text-decoration: none;
+    color: #3a3838;
+    font-size: 12.8px;
+    line-height: 15.36px;
+    font-weight: 400;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    text-align: left;
+}
+
+.footer ul li a:hover {
+    text-decoration: underline;
+    color: rgb(192, 146, 61);
+}
+
+
+.footer-column p {
+    color: #3a3838;
+    font-size: 12.8px;
+    line-height: 15.36px;
+    font-weight: 400;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    text-align: left;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
