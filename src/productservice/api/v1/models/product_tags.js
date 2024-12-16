@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/db');
-const Product = require('./product');
+const Product = require('./products');
 const Tag = require('./tags');
 
 // Define table product_tags
@@ -28,10 +28,10 @@ var ProductTag = sequelize.define('product_tags', {
     }
 }, {
     underscored: true,
-    timestamp: true
+    timestamps: false
 })
 
-Product.belongsToMany(Tag, { through: ProductTag} )
-Tag.belongsToMany(Product, { through: ProductTag} )
+Product.belongsToMany(Tag, { through: ProductTag, as: "tags_detail", foreignKey: "productId"} )
+Tag.belongsToMany(Product, { through: ProductTag, as: "tags_detail", foreignKey: "tagId"} )
 
 module.exports = ProductTag;

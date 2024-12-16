@@ -2,11 +2,10 @@ import { Editor } from "@tinymce/tinymce-react";
 import { useRef, useState, useEffect } from "react";
 import {
   getCategories,
-  createCategory,
-  createBrand,
   getBrandsV2,
   getProductAttributes,
-  createProduct
+  createProduct,
+  getTags
 } from "./../../helpers";
 import slugify from "slugify";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +26,7 @@ function AddProduct() {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [tags, setTags] = useState([]);
   const [attributes, setAttributes] = useState([]);
   const [variants, setVariants] = useState([
     {
@@ -41,6 +41,7 @@ function AddProduct() {
   ]);
   const [signal, setSignal] = useState(0)
   const [detailProduct, setDetailProduct] = useState('pricingTab')
+  const [selectedTags, setSelectedTags] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +65,11 @@ function AddProduct() {
         setAttributes(result3.data);
       }
 
-      // Fetch all product brands
+      // Fetch all product tags
+      const result4 = await getTags();
+      if (!(result4 instanceof Error)) {
+        setTags(result4.data)
+      }
     };
     fetchData();
   }, []);
@@ -84,8 +89,8 @@ function AddProduct() {
 
   // Handle click add product
   const handleAddProduct = async (event) => {
-    setIsLoading(true)
     event.preventDefault();
+    setIsLoading(true)
 
     // Get name product
     const name = document.getElementById("name-product").value
@@ -103,21 +108,46 @@ function AddProduct() {
     if (brandId === "none") {
       brandId = undefined
     }
-    // Get tag of product
-    let tagId = document.getElementById("tag-selects").value
-    if (tagId === "none") {
-      tagId = undefined
-    }
     // Get regular price of product
-    let regularPrice = document.getElementById("product-price-input").value
-    if (isNaN(regularPrice) || regularPrice === "") {
+    let regularPrice = parseFloat(document.getElementById("product-price-input").value)
+    if (isNaN(regularPrice)) {
       regularPrice = undefined
+      setModalContent({
+        type: "error",
+        title: "Lỗi",
+        message: "Giá sản phẩm phải là một số.",
+      });
+      setShowModal(true)
+      return
     }
     // Get stock of product
-    let stock = document.getElementById("product-stock-input").value
-    if (!stock) {
+    let stock = Number(document.getElementById("product-stock-input").value)
+    if (isNaN(regularPrice)) {
       stock = 0
     }
+
+    let tagData = []
+    selectedTags.forEach((tag) => {
+      tagData.push(tag.id)
+    })
+    // Get start date sale
+    let startSale = document.getElementById("start-sale-input").value
+    if (!startSale) {
+      startSale = undefined
+    }
+    // Get end date sale
+    let endSale = document.getElementById("end-sale-input").value
+    if (!endSale) {
+      endSale = undefined
+    }
+
+    // Get sale price sale
+    let salePrice = document.getElementById("sale-price-input").value
+    if (salePrice && isNaN(Number(salePrice))) {
+      salePrice = undefined
+    }
+
+    // Get selected tags of product
     let product = {
       name,
       slug,
@@ -125,8 +155,11 @@ function AddProduct() {
       regularPrice,
       categoryId,
       brandId,
-      tagId,
-      stock
+      stock,
+      tags: tagData,
+      startSale,
+      endSale,
+      salePrice: Number(salePrice)
     };
 
     // variant
@@ -164,7 +197,7 @@ function AddProduct() {
     const result = await createProduct(data);
     setIsLoading(false);
     // Check if error
-    if (result.status != 201) {
+    if (result.response && result.status != 201) {
       const errors = result.response.data.errors;
       let message = ''
       errors.forEach((err) => {
@@ -293,6 +326,31 @@ function AddProduct() {
     setVariants((prevVariants) => {
       prevVariants[variantIndex].options[optionIndex].id = selectedOption.value
       return prevVariants
+    })
+  }
+
+  // Add a selected tag
+  const handleAddSelectedTag = (event) => {
+    const index = event.target.dataset.tagIndex
+    const tag = tags[index]
+    // Save tag to selected list
+    setSelectedTags((prevTags) => {
+      for (let i=0; i<prevTags.length; i++) {
+        if (prevTags[i].id === tag.id && prevTags[i].name === tag.name) {
+          return prevTags
+        }
+      }
+      return [...prevTags, tag]
+    })
+  }
+
+  // Remove a selected tag
+  const handleRemoveSelectedTag = (event) => {
+    event.preventDefault()
+    const id = event.currentTarget.dataset.tagIndex
+    setSelectedTags((prevTags) => {
+      let newTags = prevTags.filter((tagItem) => (tagItem.id != id))
+      return newTags
     })
   }
 
@@ -598,7 +656,7 @@ function AddProduct() {
                           name="product-price-input"
                           className="form-control"
                           type="number"
-                          placeholder="vnđ"
+                          placeholder="số lượng"
                         />
                       </div>
                     </div>
@@ -616,7 +674,6 @@ function AddProduct() {
                           id="start-sale-input"
                           className="form-control"
                           type="date"
-                          placeholder="vnđ"
                         />
                       </div>
                       <div class="col-12 col-lg-6">
@@ -627,7 +684,6 @@ function AddProduct() {
                           id="end-sale-input"
                           className="form-control"
                           type="date"
-                          placeholder="vnđ"
                         />
                       </div>
                       <div class="col-12 col-lg-6">
@@ -702,10 +758,27 @@ function AddProduct() {
                             id="tag-selects"
                           >
                             <option value="none">-</option>
-                            {brands.map((item, index) => (
-                              <option value={item.id}>{item.name}</option>
+                            
+                            {tags.map((item, index) => (
+                              <option value={item.id} data-tag-index={index} onClick={handleAddSelectedTag}>    
+                                + {item.name}
+                              </option>
                             ))}
                           </select>
+                          <div className="show-selected-tags d-flex gap-2 flex-wrap">
+                            {selectedTags.map((tag) => {
+                              return (
+                                <div className="tag-items d-flex align-items-center p-1 gap-1" style={{backgroundColor:"#c7c7c7",borderRadius:"5px"}}>
+                                  <span className="badge badge-primary pe-0 fw-semibold" style={{color:"black"}}>{tag.name}</span>
+                                  <a className="btn p-0 d-flex" href="#!" data-tag-index={tag.id} onClick={handleRemoveSelectedTag}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="16px" height="16px" fill="black">
+                                      <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                    </svg>
+                                  </a>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>

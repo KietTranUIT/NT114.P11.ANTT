@@ -9,7 +9,7 @@ const fileMiddleware = require('../middleware/fileUploads');
 
 router.use('/attributes', attributeRoutes)
 router.use('/tags', tagRoutes)  
-router.get('/', products.defaultRoute)
+router.get('/', products.get)
 router.post('/', fileMiddleware.uploadMultipleFile('file', 8), products.create)
 
 module.exports = router;

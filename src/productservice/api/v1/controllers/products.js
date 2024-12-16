@@ -4,9 +4,14 @@ const { checkRequiredParameters, strongParameters, generateSlug } = require('../
 const Product = require('../models/products');
 const ProductMedia = require('../models/media');
 const { sequelize } = require('../../../config/db');
-const { checkFileType, uploadVideoBuffer, uploadFileV101, resizeImage, isImageFile, isVideoFile } = require('../help/upload');
+const { checkFileType, uploadVideoBuffer, uploadFileV101, resizeImage, isImageFile, isVideoFile, parseField } = require('../help/upload');
 const ProductVariant = require('../models/variants');
 const VariantAttribute = require('../models/variant_attributes');
+const Category = require('../models/categories');
+const Brand = require('../models/brands');
+const ProductTag = require('../models/product_tags');
+const Tag = require('../models/tags');
+
 
 module.exports.defaultRoute = async (req, res) => {
     res.status(200).json({ message: "Welcome to Product service!"})
@@ -18,7 +23,7 @@ const limitVideoSize = 45003139 // 20MB
 // List params is allowed when create a product
 const whiteListProductCreationParams = [
     'name', 'slug', 'description', 'regularPrice', 'salePrice', 'startSale', 'endSale', 'stock', 'status',
-    'categoryId', 'brandId', 'reviewAllowed'
+    'categoryId', 'brandId', 'reviewAllowed', 'tags'
 ]
 
 // List params is allowed when create a product variant
@@ -43,8 +48,9 @@ module.exports.create = async (req, res) => {
             return res.status(400).json({ errors : [errobj]})
         }
         // Checking of params is required
-        if ( !checkRequiredParameters(productData, ['name', 'regularPrice'])[0]) {
-            return res.status(422).json({ errors: data[1]})
+        let check = checkRequiredParameters(productData, ['name', 'regularPrice'])
+        if (!check[0]) {
+            return res.status(422).json({ errors: check[1]})
         }
         // Ignore all params is not in whitelist
         const productParams = strongParameters(productData, whiteListProductCreationParams)
@@ -149,11 +155,28 @@ module.exports.create = async (req, res) => {
 
         let product, medias
         let variants = []
+        let tags
         // Create a transaction
         let transaction = await sequelize.transaction()
         try {
+            let tagIds = productParams.tags
+            if (tagIds) {
+                delete productParams.tags
+            }
             // Create record on products table
             product = await Product.create(productParams, { transaction })
+
+            // Create tags of product
+            if (tagIds) {
+                let tagParams = []
+                for (let i = 0; i < tagIds.length; i++) {
+                    tagParams.push({
+                        tagId: tagIds[i],
+                        productId: product.id
+                    })
+                }
+                tags = await ProductTag.bulkCreate(tagParams, { transaction })
+            }
 
             // Create record on product_medias table
             for(let i = 0; i < mediaParams.length; i++) {
@@ -201,10 +224,88 @@ module.exports.create = async (req, res) => {
         res.status(201).json({
             type: 'product',
             data: {
-                product, variants, medias 
+                product, variants, medias, tags
             }
         })
     } catch (error) {
+        console.log(error)
+        res.status(500).json(ErrorObj.createInternalError(error.message))
+    }
+}
+
+const getProductsParamsWhiteList = ['page', 'limit', 'search', 'sort', 'order','field', 'include']
+const dictionary = {
+    media: ProductMedia,
+    variant: ProductVariant,
+    category: Category,
+    brand: Brand,
+    tags: ProductTag
+}
+// Get products
+module.exports.get = async (req, res) => {
+    try {
+        //let queries = strongParameters(req.query, getProductsParamsWhiteList)
+        let queries = req.query
+        
+        // Get total products in database
+        if (queries.event === 'total') {
+            let total = await Product.count()
+            return res.status(200).json({ type: "products", total })
+        }
+        let option = {
+            offset: (queries.page && queries.limit) ? (queries.page - 1) * queries.limit : undefined,
+            limit: (queries.page && queries.limit) ? (queries.limit) : undefined,
+            order: [
+                [`${queries.sort ? (queries.sort):('id')}`, `${queries.order ? (queries.order):('ASC')}`]
+            ],
+            attributes: (queries.field) ? (
+                (queries.field['product']) ? (
+                    queries.field['product'].split(',')
+                ) : (undefined)
+            ) : (undefined),
+            include: (queries.include) ? (
+                queries.include.split(',').map((instance) => {
+                    if (instance === 'tags') {
+                        return {
+                            model: Tag,
+                            as: 'tags_detail'
+                        }
+                    }
+                    return {
+                        model: dictionary[instance],
+                        attributes: (queries.field) ? (
+                            (queries.field[instance]) ? (
+                                queries.field[instance].split(',')
+                            ) : (undefined)
+                        ) : (undefined),
+                    }
+                })
+            ) : undefined
+        }
+        if (queries.search) {
+            option.where = {
+                name: {
+                    [sequelize.Op.iLike]: `%${queries.search}%`
+                }
+            }
+        }
+        // if (queries.field) {
+        //     const fields = parseField(queries.field, 'product')
+        //     if (fields != null) {
+        //         option.attributes = fields
+        //     }
+        // }
+
+        // Get brands
+        const products = await Product.findAll(option)
+
+        res.status(200).json({
+            type: 'product',
+            len: products.length,
+            data: products
+        })
+    } catch (error) {
+        console.log(error)
         res.status(500).json(ErrorObj.createInternalError(error.message))
     }
 }

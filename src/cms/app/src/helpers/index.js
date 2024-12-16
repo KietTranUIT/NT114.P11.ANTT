@@ -265,3 +265,34 @@ export const createProduct = async (formData) => {
         return error
     }
 }
+
+// Get all tags
+export const getTags = async () => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products/tags`)
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Get all brands version 2
+export const getProducts = async (params) => {
+    try {
+        const result = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products`, {
+            params
+        })
+        return result.data
+    } catch (error) {
+        return error
+    }
+}
+
+// Format to VND
+export const formatToVNDCustom = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount) + ' VND';
+  };
