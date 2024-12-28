@@ -1,72 +1,87 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require("sequelize");
 
-const { sequelize } = require('../../../config/db');
-const Brand = require('./brands');
-const Category = require('./categories');
+const { sequelize } = require("../../../config/db");
+const Brand = require("./brands");
+const Category = require("./categories");
 
-var Product = sequelize.define('products', {
+var Product = sequelize.define(
+  "products",
+  {
     id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
     name: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false,
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: false,
     },
     description: {
-        type: DataTypes.STRING,
+      type: DataTypes.STRING,
     },
     slug: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: false,
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: false,
     },
     regularPrice: {
-        type: DataTypes.FLOAT,
-        allowNull: false,
+      type: DataTypes.FLOAT,
+      allowNull: false,
     },
     salePrice: {
-        type: DataTypes.FLOAT,
-        defaultValue: 0
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
     },
     startSale: {
-        type: DataTypes.TIME,
+      type: DataTypes.TIME,
     },
     endSale: {
-        type: DataTypes.TIME
+      type: DataTypes.TIME,
     },
     status: {
-        type: DataTypes.ENUM('active', 'inactive'),
-        defaultValue: 'active'
+      type: DataTypes.ENUM("active", "inactive"),
+      defaultValue: "active",
     },
     brandId: {
-        type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER,
     },
     categoryId: {
-        type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER,
     },
     stock: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
     reviewAllowed: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: true
-    }
-}, {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    rating: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    discount: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    type_discount: {
+      type: DataTypes.ENUM(["percent", "fixed"]),
+    },
+  },
+  {
     underscored: true,
-    timestamp: true
-})
+    timestamp: true,
+  }
+);
 
 Brand.hasMany(Product, {
-    foreignKey: 'brandId'
+  foreignKey: "brandId",
 });
 Product.belongsTo(Brand);
 
 Category.hasMany(Product, {
-    foreignKey: 'categoryId',
+  foreignKey: "categoryId",
 });
 Product.belongsTo(Category);
 

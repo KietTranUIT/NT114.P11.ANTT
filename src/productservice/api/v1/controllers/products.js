@@ -1,311 +1,521 @@
-const errorCodes = require('./../../../config/errors');
-const ErrorObj = require('../models/errors');
-const { checkRequiredParameters, strongParameters, generateSlug } = require('../help');
-const Product = require('../models/products');
-const ProductMedia = require('../models/media');
-const { sequelize } = require('../../../config/db');
-const { checkFileType, uploadVideoBuffer, uploadFileV101, resizeImage, isImageFile, isVideoFile, parseField } = require('../help/upload');
-const ProductVariant = require('../models/variants');
-const VariantAttribute = require('../models/variant_attributes');
-const Category = require('../models/categories');
-const Brand = require('../models/brands');
-const ProductTag = require('../models/product_tags');
-const Tag = require('../models/tags');
-
+const errorCodes = require("./../../../config/errors");
+const ErrorObj = require("../models/errors");
+const {
+  checkRequiredParameters,
+  strongParameters,
+  generateSlug,
+} = require("../help");
+const Product = require("../models/products");
+const ProductMedia = require("../models/media");
+const { sequelize } = require("../../../config/db");
+const {
+  checkFileType,
+  uploadVideoBuffer,
+  uploadFileV101,
+  resizeImage,
+  isImageFile,
+  isVideoFile,
+  parseField,
+} = require("../help/upload");
+const ProductVariant = require("../models/variants");
+const VariantAttribute = require("../models/variant_attributes");
+const Category = require("../models/categories");
+const Brand = require("../models/brands");
+const ProductTag = require("../models/product_tags");
+const Tag = require("../models/tags");
+const { Op } = require("sequelize");
+const ProductReview = require("../models/product_reviews");
+const ProductAttribute = require("../models/attributes");
+const User = require("../models/users");
 
 module.exports.defaultRoute = async (req, res) => {
-    res.status(200).json({ message: "Welcome to Product service!"})
-}
+  res.status(200).json({ message: "Welcome to Product service!" });
+};
 
 // Limit size video
-const limitVideoSize = 45003139 // 20MB
+const limitVideoSize = 45003139; // 20MB
 
 // List params is allowed when create a product
 const whiteListProductCreationParams = [
-    'name', 'slug', 'description', 'regularPrice', 'salePrice', 'startSale', 'endSale', 'stock', 'status',
-    'categoryId', 'brandId', 'reviewAllowed', 'tags'
-]
+  "name",
+  "slug",
+  "description",
+  "regularPrice",
+  "salePrice",
+  "startSale",
+  "endSale",
+  "stock",
+  "status",
+  "categoryId",
+  "brandId",
+  "reviewAllowed",
+  "tags",
+];
 
 // List params is allowed when create a product variant
 const whiteListVariantCreationParams = [
-    'regularPrice', 'salePrice', 'startSale', 'endSale', 'stock', 'status', 'attributes'
-]
+  "regularPrice",
+  "salePrice",
+  "startSale",
+  "endSale",
+  "stock",
+  "status",
+  "attributes",
+];
 
 // List params is allowed when create variant attribute
-const whiteListAttributeVariantCreationParams = [
-    'attributeId', 'value'
-]
+const whiteListAttributeVariantCreationParams = ["attributeId", "value"];
 
 // Create a product
 module.exports.create = async (req, res) => {
+  try {
+    // Get product params in form data
+    let productData;
     try {
-        // Get product params in form data
-        let productData
-        try {
-            productData = JSON.parse(req.body.product)
-        } catch (err_json) {
-            const errobj = new ErrorObj(errorCodes.invalidData, 400, "Invalid data", "product form data invalid.", { pointer: "/product" })
-            return res.status(400).json({ errors : [errobj]})
-        }
-        // Checking of params is required
-        let check = checkRequiredParameters(productData, ['name', 'regularPrice'])
-        if (!check[0]) {
-            return res.status(422).json({ errors: check[1]})
-        }
-        // Ignore all params is not in whitelist
-        const productParams = strongParameters(productData, whiteListProductCreationParams)
-        // Check if don't have slug
-        if (!productParams.slug) {
-            productParams.slug = generateSlug(productParams.name)
-        }
-
-        // Get product variant params  
-        let variantParams = []
-        let variant_errs = []
-        if (req.body.variant) {
-            // Get variant params in form data
-            let variantData
-            try {
-                variantData = JSON.parse(req.body.variant)
-            } catch (err_json) {
-                const errobj = new ErrorObj(errorCodes.invalidData, 400, "Invalid data", "variant form data invalid.", { pointer: "/variant" })
-                return res.status(400).json({ errors : [errobj]})
-            }
-            if (!(variantData instanceof Array)) {
-                const errobj = new ErrorObj(errorCodes.invalidData, 400, "Invalid data", "variant form data invalid.", { pointer: "/variant" })
-                return res.status(400).json({ errors: [errobj] })
-            }
-            variantData.map((variant) => {
-                // Checking of params is required in variant data
-                const check = checkRequiredParameters(variant, ['attributes'])
-                if (!check[0]) {
-                    variant_errs.push(check[1])
-                    return
-                }
-
-                // Ignore all params is not in whitelist
-                let strongVariantParams = strongParameters(variant, whiteListVariantCreationParams)
-                // Set variant regular price is product price if it is not exists
-                if (!strongVariantParams.regularPrice) {
-                    strongVariantParams.regularPrice = productParams.regularPrice
-                }
-
-                // Checking of params is required in attribute variant
-                strongVariantParams.attributes.map((attribute) => {
-                    const check = checkRequiredParameters(attribute, ['attributeId', 'value'])
-                    if (!check[0]) {
-                        variant_errs.push(check[1])
-                        return
-                    }
-                })
-                variantParams.push(strongVariantParams)
-                
-            })
-        }
-        if (variant_errs.length > 0) {
-            return res.status(422).json({ errors: variant_errs })
-        }
-
-        // Check file type of product media
-        let flag = true
-        let file_errs = []
-        req.files.map((file) => {
-            if (!checkFileType(file, ['image', 'video'])) {
-                const file_err = new ErrorObj(errorCodes.invalidFile, 422, 'Invalid file type', `file ${file.originalname} is invalid`, { pointer: '/file'})
-                file_errs.push(file_err)
-            }
-
-            // Check limit video file
-            if (isVideoFile(file) && file.size > limitVideoSize) {
-                const file_err = new ErrorObj(errorCodes.invalidFile, 422, 'Invalid file type', `file ${file.originalname} size over 20MB`, { pointer: '/file'})
-                file_errs.push(file_err)
-            }
-            if (isImageFile(file)) {
-                flag = false
-            }
-        })
-        if (flag) {
-            const file_err = new ErrorObj(errorCodes.missingField, 422, 'Missing file', 'phải có ít nhất một file hình ảnh', { pointer: '/file'})
-            return res.status(422).json({ errors: [file_err]})
-        }
-
-        if (file_errs.length > 0) {
-            return res.status(422).json({ errors: file_errs })
-        }
-
-        let mediaParams = []
-        for (let i = 0; i < req.files.length; i++) {
-            let uploadResult
-            if (isVideoFile(req.files[i])) {
-                uploadResult = await uploadVideoBuffer(req.files[i].buffer, 'products')
-                if (uploadResult instanceof Error) {
-                    throw new Error(uploadResult.message)
-                }
-                mediaParams.push({ url: uploadResult.secure_url, mType: 'video' })
-                return
-            }
-            uploadResult = await uploadFileV101(req.files[i].buffer, 'products')
-            if (i == 0) {
-                mediaParams.push({url: uploadResult.secure_url, mType: 'image', isMain: true})
-            } else {
-                mediaParams.push({url: uploadResult.secure_url, mType: 'image'})
-            }
-        }
-
-
-        let product, medias
-        let variants = []
-        let tags
-        // Create a transaction
-        let transaction = await sequelize.transaction()
-        try {
-            let tagIds = productParams.tags
-            if (tagIds) {
-                delete productParams.tags
-            }
-            // Create record on products table
-            product = await Product.create(productParams, { transaction })
-
-            // Create tags of product
-            if (tagIds) {
-                let tagParams = []
-                for (let i = 0; i < tagIds.length; i++) {
-                    tagParams.push({
-                        tagId: tagIds[i],
-                        productId: product.id
-                    })
-                }
-                tags = await ProductTag.bulkCreate(tagParams, { transaction })
-            }
-
-            // Create record on product_medias table
-            for(let i = 0; i < mediaParams.length; i++) {
-                mediaParams[i].productId = product.id
-            }
-            medias = await ProductMedia.bulkCreate(mediaParams, { transaction })
- 
-            // Create record on product_variants table
-            if (variantParams.length > 0) {
-                for(let i = 0; i < variantParams.length; i++) {
-                    let attributeParams = variantParams[i].attributes
-                    delete variantParams[i].attributes
-                    variantParams[i].productId = product.id
-                    let variant = await ProductVariant.create(variantParams[i], { transaction })
-
-                    let attributes = []
-                    for (let j = 0; j < attributeParams.length; j++) {
-                        const variant_attribute = await VariantAttribute.create({
-                            variantId: variant.id,
-                            attributeId: attributeParams[i].attributeId,
-                            value: attributeParams[i].value
-                        }, { transaction })
-                        attributes.push(variant_attribute)
-                    }
-                    variants.push({ variant, attributes })
-                }                
-            }
-
-            // Save all if success
-            await transaction.commit()
-        } catch (err_db) {
-            await transaction.rollback()
-            if (err_db.name === 'SequelizeUniqueConstraintError') {
-                let err
-                if (err_db.errors[0].path === 'slug') {
-                    err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate record', 'duplicate slug product.', { pointer: '/product/slug' })
-                } else {
-                    err = new ErrorObj(errorCodes.duplicateEntry, 422, 'Duplicate entry', 'duplicate name product.', { pointer: '/product/name' })
-                }
-                return res.status(422).json({ errors: [err] })
-            }
-            throw err_db
-        }    
-
-        res.status(201).json({
-            type: 'product',
-            data: {
-                product, variants, medias, tags
-            }
-        })
-    } catch (error) {
-        console.log(error)
-        res.status(500).json(ErrorObj.createInternalError(error.message))
+      productData = JSON.parse(req.body.product);
+    } catch (err_json) {
+      const errobj = new ErrorObj(
+        errorCodes.invalidData,
+        400,
+        "Invalid data",
+        "product form data invalid.",
+        { pointer: "/product" }
+      );
+      return res.status(400).json({ errors: [errobj] });
     }
-}
+    // Checking of params is required
+    let check = checkRequiredParameters(productData, ["name", "regularPrice"]);
+    if (!check[0]) {
+      return res.status(422).json({ errors: check[1] });
+    }
+    // Ignore all params is not in whitelist
+    const productParams = strongParameters(
+      productData,
+      whiteListProductCreationParams
+    );
+    // Check if don't have slug
+    if (!productParams.slug) {
+      productParams.slug = generateSlug(productParams.name);
+    }
 
-const getProductsParamsWhiteList = ['page', 'limit', 'search', 'sort', 'order','field', 'include']
+    // Get product variant params
+    let variantParams = [];
+    let variant_errs = [];
+    if (req.body.variant) {
+      // Get variant params in form data
+      let variantData;
+      try {
+        variantData = JSON.parse(req.body.variant);
+      } catch (err_json) {
+        const errobj = new ErrorObj(
+          errorCodes.invalidData,
+          400,
+          "Invalid data",
+          "variant form data invalid.",
+          { pointer: "/variant" }
+        );
+        return res.status(400).json({ errors: [errobj] });
+      }
+      if (!(variantData instanceof Array)) {
+        const errobj = new ErrorObj(
+          errorCodes.invalidData,
+          400,
+          "Invalid data",
+          "variant form data invalid.",
+          { pointer: "/variant" }
+        );
+        return res.status(400).json({ errors: [errobj] });
+      }
+      variantData.map((variant) => {
+        // Checking of params is required in variant data
+        const check = checkRequiredParameters(variant, ["attributes"]);
+        if (!check[0]) {
+          variant_errs.push(check[1]);
+          return;
+        }
+
+        // Ignore all params is not in whitelist
+        let strongVariantParams = strongParameters(
+          variant,
+          whiteListVariantCreationParams
+        );
+        // Set variant regular price is product price if it is not exists
+        if (!strongVariantParams.regularPrice) {
+          strongVariantParams.regularPrice = productParams.regularPrice;
+        }
+
+        // Checking of params is required in attribute variant
+        strongVariantParams.attributes.map((attribute) => {
+          const check = checkRequiredParameters(attribute, [
+            "attributeId",
+            "value",
+          ]);
+          if (!check[0]) {
+            variant_errs.push(check[1]);
+            return;
+          }
+        });
+        variantParams.push(strongVariantParams);
+      });
+    }
+    if (variant_errs.length > 0) {
+      return res.status(422).json({ errors: variant_errs });
+    }
+
+    // Check file type of product media
+    let flag = true;
+    let file_errs = [];
+    req.files.map((file) => {
+      if (!checkFileType(file, ["image", "video"])) {
+        const file_err = new ErrorObj(
+          errorCodes.invalidFile,
+          422,
+          "Invalid file type",
+          `file ${file.originalname} is invalid`,
+          { pointer: "/file" }
+        );
+        file_errs.push(file_err);
+      }
+
+      // Check limit video file
+      if (isVideoFile(file) && file.size > limitVideoSize) {
+        const file_err = new ErrorObj(
+          errorCodes.invalidFile,
+          422,
+          "Invalid file type",
+          `file ${file.originalname} size over 20MB`,
+          { pointer: "/file" }
+        );
+        file_errs.push(file_err);
+      }
+      if (isImageFile(file)) {
+        flag = false;
+      }
+    });
+    if (flag) {
+      const file_err = new ErrorObj(
+        errorCodes.missingField,
+        422,
+        "Missing file",
+        "phải có ít nhất một file hình ảnh",
+        { pointer: "/file" }
+      );
+      return res.status(422).json({ errors: [file_err] });
+    }
+
+    if (file_errs.length > 0) {
+      return res.status(422).json({ errors: file_errs });
+    }
+
+    let mediaParams = [];
+    for (let i = 0; i < req.files.length; i++) {
+      let uploadResult;
+      if (isVideoFile(req.files[i])) {
+        uploadResult = await uploadVideoBuffer(req.files[i].buffer, "products");
+        if (uploadResult instanceof Error) {
+          throw new Error(uploadResult.message);
+        }
+        mediaParams.push({ url: uploadResult.secure_url, mType: "video" });
+        return;
+      }
+      uploadResult = await uploadFileV101(req.files[i].buffer, "products");
+      if (i == 0) {
+        mediaParams.push({
+          url: uploadResult.secure_url,
+          mType: "image",
+          isMain: true,
+        });
+      } else {
+        mediaParams.push({ url: uploadResult.secure_url, mType: "image" });
+      }
+    }
+
+    let product, medias;
+    let variants = [];
+    let tags;
+    // Create a transaction
+    let transaction = await sequelize.transaction();
+    try {
+      let tagIds = productParams.tags;
+      if (tagIds) {
+        delete productParams.tags;
+      }
+      // Create record on products table
+      product = await Product.create(productParams, { transaction });
+
+      // Create tags of product
+      if (tagIds) {
+        let tagParams = [];
+        for (let i = 0; i < tagIds.length; i++) {
+          tagParams.push({
+            tagId: tagIds[i],
+            productId: product.id,
+          });
+        }
+        tags = await ProductTag.bulkCreate(tagParams, { transaction });
+      }
+
+      // Create record on product_medias table
+      for (let i = 0; i < mediaParams.length; i++) {
+        mediaParams[i].productId = product.id;
+      }
+      medias = await ProductMedia.bulkCreate(mediaParams, { transaction });
+
+      // Create record on product_variants table
+      if (variantParams.length > 0) {
+        for (let i = 0; i < variantParams.length; i++) {
+          let attributeParams = variantParams[i].attributes;
+          delete variantParams[i].attributes;
+          variantParams[i].productId = product.id;
+          let variant = await ProductVariant.create(variantParams[i], {
+            transaction,
+          });
+
+          let attributes = [];
+          for (let j = 0; j < attributeParams.length; j++) {
+            const variant_attribute = await VariantAttribute.create(
+              {
+                variantId: variant.id,
+                attributeId: attributeParams[i].attributeId,
+                value: attributeParams[i].value,
+              },
+              { transaction }
+            );
+            attributes.push(variant_attribute);
+          }
+          variants.push({ variant, attributes });
+        }
+      }
+
+      // Save all if success
+      await transaction.commit();
+    } catch (err_db) {
+      await transaction.rollback();
+      if (err_db.name === "SequelizeUniqueConstraintError") {
+        let err;
+        if (err_db.errors[0].path === "email") {
+          err = new ErrorObj(
+            errorCodes.duplicateEntry,
+            422,
+            "Duplicate record",
+            "duplicate slug product.",
+            { pointer: "/product/slug" }
+          );
+        } else {
+          err = new ErrorObj(
+            errorCodes.duplicateEntry,
+            422,
+            "Duplicate entry",
+            "duplicate name product.",
+            { pointer: "/product/name" }
+          );
+        }
+        return res.status(422).json({ errors: [err] });
+      }
+      throw err_db;
+    }
+
+    res.status(201).json({
+      type: "product",
+      data: {
+        product,
+        variants,
+        medias,
+        tags,
+      },
+    });
+  } catch (error) {
+    console.log(error); 
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+const getProductsParamsWhiteList = [
+  "page",
+  "limit",
+  "search",
+  "sort",
+  "order",
+  "field",
+  "include",
+];
 const dictionary = {
-    media: ProductMedia,
-    variant: ProductVariant,
-    category: Category,
-    brand: Brand,
-    tags: ProductTag
-}
+  media: ProductMedia,
+  variant: ProductVariant,
+  category: Category,
+  brand: Brand,
+  tags: ProductTag,
+};
+
+// Get detail products
+module.exports.getDetail = async (req, res) => {
+  try {
+    const slugOrId = req.params.slugorid;
+    let where = {};
+    if (isNaN(slugOrId)) {
+      where.slug = slugOrId;
+    } else {
+      where.id = slugOrId;
+    }
+
+    let product;
+    try {
+      product = await Product.findOne({
+        where,
+        include: [
+          {
+            model: ProductReview,
+            include: [{
+                model: User,
+                attributes: ["fullName"],
+            }]
+          },
+          {
+            model: ProductMedia,
+          },
+          {
+            model: ProductVariant,
+            include: [
+              {
+                model: VariantAttribute,
+                include: [{
+                    model: ProductAttribute,
+                    attributes: ['name']
+                }]
+              },
+            ],
+          },
+        ],
+        order: [[{ model: ProductMedia }, 'id', 'ASC']]
+      });
+      return res.status(200).json({
+        type: "product",
+        data: product,
+      });
+    } catch (err_db) {
+      console.log(err_db);
+      throw err_db
+    }
+    res.status(200).json({
+      type: "product",
+      data: product,
+    });
+  } catch (error) {
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
 // Get products
 module.exports.get = async (req, res) => {
-    try {
-        //let queries = strongParameters(req.query, getProductsParamsWhiteList)
-        let queries = req.query
-        
-        // Get total products in database
-        if (queries.event === 'total') {
-            let total = await Product.count()
-            return res.status(200).json({ type: "products", total })
-        }
-        let option = {
-            offset: (queries.page && queries.limit) ? (queries.page - 1) * queries.limit : undefined,
-            limit: (queries.page && queries.limit) ? (queries.limit) : undefined,
-            order: [
-                [`${queries.sort ? (queries.sort):('id')}`, `${queries.order ? (queries.order):('ASC')}`]
-            ],
-            attributes: (queries.field) ? (
-                (queries.field['product']) ? (
-                    queries.field['product'].split(',')
-                ) : (undefined)
-            ) : (undefined),
-            include: (queries.include) ? (
-                queries.include.split(',').map((instance) => {
-                    if (instance === 'tags') {
-                        return {
-                            model: Tag,
-                            as: 'tags_detail'
-                        }
-                    }
-                    return {
-                        model: dictionary[instance],
-                        attributes: (queries.field) ? (
-                            (queries.field[instance]) ? (
-                                queries.field[instance].split(',')
-                            ) : (undefined)
-                        ) : (undefined),
-                    }
-                })
-            ) : undefined
-        }
-        if (queries.search) {
-            option.where = {
-                name: {
-                    [sequelize.Op.iLike]: `%${queries.search}%`
-                }
-            }
-        }
-        // if (queries.field) {
-        //     const fields = parseField(queries.field, 'product')
-        //     if (fields != null) {
-        //         option.attributes = fields
-        //     }
-        // }
+  try {
+    //let queries = strongParameters(req.query, getProductsParamsWhiteList)
+    let queries = req.query;
 
-        // Get brands
-        const products = await Product.findAll(option)
-
-        res.status(200).json({
-            type: 'product',
-            len: products.length,
-            data: products
-        })
-    } catch (error) {
-        console.log(error)
-        res.status(500).json(ErrorObj.createInternalError(error.message))
+    // Get total products in database
+    if (queries.event === "total") {
+      let total = await Product.count();
+      return res.status(200).json({ type: "products", total });
     }
-}
+    let option = {
+      offset:
+        queries.page && queries.limit
+          ? (queries.page - 1) * queries.limit
+          : undefined,
+      limit: queries.page && queries.limit ? queries.limit : undefined,
+      order: [
+        [
+          `${queries.sort ? queries.sort : "id"}`,
+          `${queries.order ? queries.order : "ASC"}`,
+        ],
+      ],
+      attributes: queries.field
+        ? queries.field["product"]
+          ? queries.field["product"].split(",")
+          : undefined
+        : undefined,
+      include: queries.include
+        ? queries.include.split(",").map((instance) => {
+            if (instance === "tags") {
+              return {
+                model: Tag,
+                as: "tags_detail",
+              };
+            }
+            return {
+              model: dictionary[instance],
+              attributes: queries.field
+                ? queries.field[instance]
+                  ? queries.field[instance].split(",")
+                  : undefined
+                : undefined,
+            };
+          })
+        : undefined,
+    };
+    if (queries.search) {
+      option.where = {
+        name: {
+          [sequelize.Op.iLike]: `%${queries.search}%`,
+        },
+      };
+    }
+    // if (queries.field) {
+    //     const fields = parseField(queries.field, 'product')
+    //     if (fields != null) {
+    //         option.attributes = fields
+    //     }
+    // }
+
+    // Get brands
+    const products = await Product.findAll(option);
+
+    res.status(200).json({
+      type: "product",
+      len: products.length,
+      data: products,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+// Create a review on product
+module.exports.review = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const userId = JSON.parse(req.headers["x-user"]).id;
+    const check = checkRequiredParameters(req.body, ["rating"]);
+    if (!check[0]) {
+      const err = new ErrorObj(
+        errorCodes.missingField,
+        400,
+        "Missing field",
+        check[1],
+        { pointer: "/rating" }
+      );
+      return res.status(400).json({ errors: [err] });
+    }
+
+    const { rating, content } = req.body;
+
+    let review;
+    try {
+      review = await ProductReview.create({
+        productId,
+        userId,
+        rating,
+        content,
+      });
+    } catch (err_db) {
+      console.log(err_db);
+    }
+    return res.status(201).json({
+      type: "product_reviews",
+      data: review,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};

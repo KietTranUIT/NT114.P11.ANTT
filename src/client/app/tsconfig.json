@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "app/lib/placeholder-data.ts",
+    "scripts/seed.js"
+, "app/ui/login-form.js", "app/ui/components/openmap/map.js", "app/ui/components/products/products.js", "app/products/[name]/page.js", "app/products/page.js", "app/ui/components/card/card.js", "app/ui/components/modal/modal.js", "app/ui/components/product/product.js", "app/account/cart/page.js", "app/ui/components/checkout/checkout.js"  ],
+  "exclude": ["node_modules"]
+}

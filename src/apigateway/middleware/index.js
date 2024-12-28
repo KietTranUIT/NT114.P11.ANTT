@@ -13,17 +13,21 @@ module.exports.authenticate = async (req, res, next) => {
 
         let flag = false
         for (let i = 0; i < services[serviceIndex].paths.length; i++) {
-            if (req.path === services[serviceIndex].paths[i].path && services[serviceIndex].paths[i].auth.includes(req.method)) {
-                flag = true
-                break
+            if (services[serviceIndex].paths[i].path instanceof RegExp) {
+                flag = services[serviceIndex].paths[i].path.test(req.path) && services[serviceIndex].paths[i].auth.includes(req.method)
+            } else {
+                if (req.path === services[serviceIndex].paths[i].path && services[serviceIndex].paths[i].auth.includes(req.method)) {
+                    flag = true
+                    break
+                }
             }
+            
         }
 
         if (!flag) {
             next()
             return
         }
-        
         const authorization = req.headers['authorization']
         
         if (!authorization) {
@@ -37,6 +41,7 @@ module.exports.authenticate = async (req, res, next) => {
 
         const user = verifyJWT(auth[1], 'access_token')
         req.user = user
+        console.log(user)
         next()   
     } catch (error) {
         return res.status(401).json({
