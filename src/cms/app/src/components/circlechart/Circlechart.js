@@ -1,12 +1,7 @@
 // CircleChart.js
 import React from "react";
 import { Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -39,23 +34,44 @@ const CircleChart = () => {
   // Options for the chart
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 0, // Padding phía trên
+        bottom: 0, // Padding phía dưới
+        left: 0, // Padding phía trái
+        right: 0, // Padding phía phải
+      },
+    },
     plugins: {
       legend: {
-        position: "top",
+        position: "right", // Đặt chú giải (legend) ở bên phải
+        labels: {
+          font: {
+            size: 14, // Kích thước chữ của chú giải
+          },
+        },
       },
       tooltip: {
         callbacks: {
           label: function (context) {
             const label = context.label || "";
             const value = context.raw || 0;
-            return `${label}: ${value}%`;
+            return `${label}: ${context}`;
           },
         },
       },
     },
   };
 
-  return <Pie data={data} options={options} />;
+  return (
+    <div
+      className="d-flex justify-content-center"
+      style={{ width: "250px", height: "250px" }}
+    >
+      <Pie data={data} options={options} />
+    </div>
+  );
 };
 
 export default CircleChart;

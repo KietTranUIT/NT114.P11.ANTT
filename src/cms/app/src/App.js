@@ -8,7 +8,7 @@ import NotFound from "./pages/404";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Categories from "./pages/category/Categories";
 import Brands from "./pages/brand/Brands";
-
+import Orders from "./pages/order/orders";
 
 function App() {
   return (
@@ -17,10 +17,12 @@ function App() {
         <Route path="/categories" exact element={<Categories/>}/>
         <Route path="/addproduct" exact element={<AddProduct/>}/>
         <Route path="/products" exact element={<ListProducts/>}/>
-        <Route path="/brands" exact element={<Brands/>}/>
+        <Route path="/brands" exact element={<Brands />} />
         <Route path="/auth" exact element={<Auth/>} />
         <Route element={ <ProtectedRoute />}>
-          <Route path="/" element={ <Dashboard /> } />
+          <Route path="/" element={<Dashboard />} />
+        <Route path="/orders" exac element={<Orders />} />
+          
         </Route>
         <Route path="*" element={ <NotFound />} />
       </Routes>

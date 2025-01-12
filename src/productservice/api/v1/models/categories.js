@@ -21,6 +21,10 @@ var Category = sequelize.define('categories', {
         unique: true,
         allowNull: false,
     },
+    top_products: {
+        type: DataTypes.STRING,
+        defaultValue: ''
+    }
 }, {
     underscored: true,
     timestamp: true

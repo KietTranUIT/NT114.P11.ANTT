@@ -4,12 +4,12 @@ const Advertisment = () => {
       <div className="col-span-2">
         <div className="gift-items-banner w-100 rounded-3 overflow-hidden relative">
           <div
-            className="h-80 bg-cover bg-center bg-no-repeat rounded-xl flex justify-center"
+            className="h-[400px] bg-cover bg-center bg-no-repeat rounded-xl flex justify-center"
             style={{
-              backgroundImage: "url(/gift-items-banner-bg.png)",
+              backgroundImage: "url(/quangcao.png)",
             }}
           >
-            <div className="banner-text text-md-center z-10 flex flex-col items-center gap-4">
+            {/* <div className="banner-text text-md-center z-10 flex flex-col items-center gap-4">
               <h2 className="text-white font-bold text-4xl mt-10">
                 Get <span className="text-sky-400">10% Off </span>
                 on gift items
@@ -21,7 +21,7 @@ const Advertisment = () => {
               >
                 Mua ngay
               </a>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

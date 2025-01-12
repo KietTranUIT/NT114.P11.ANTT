@@ -24,6 +24,7 @@ module.exports.sequelize = new Sequelize(
         return next();
       },
     },
+    timezone: '+07:00'
   }
 );
 

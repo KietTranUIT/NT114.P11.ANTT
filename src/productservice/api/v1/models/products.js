@@ -68,6 +68,10 @@ var Product = sequelize.define(
     type_discount: {
       type: DataTypes.ENUM(["percent", "fixed"]),
     },
+    similarProducts: {
+      type: DataTypes.STRING,
+      defaultValue: '',
+    }
   },
   {
     underscored: true,

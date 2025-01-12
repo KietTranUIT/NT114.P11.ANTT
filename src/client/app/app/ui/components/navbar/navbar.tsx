@@ -3,8 +3,8 @@ const NavBar = () => {
     <>
       <div className="bg-white mb-5">
         <div className="container mx-auto">
-          <div className="flex justify-between items-center px-4 py-2">
-            <a
+          <div className="flex justify-end items-center px-4 py-2">
+            {/* <a
               href="/"
               className="text-base font-bold"
               style={{ color: "#525b75" }}
@@ -21,57 +21,33 @@ const NavBar = () => {
                 </svg>
                 <h1>Danh mục</h1>
               </div>
-            </a>
+            </a> */}
             <ul
               className="flex gap-5 font-semibold text-sm"
               style={{ color: "#525b75" }}
             >
               <li className="nav-item" data-nav-item="data-nav-item">
                 <a
-                  className="nav-link ps-0"
+                  className="nav-link ps-0 text-orange-400"
                   href="/"
                 >
-                  Home
-                </a>
-              </li>
-              <li className="nav-item" data-nav-item="data-nav-item">
-                <a
-                  className="nav-link"
-                  href="../../../apps/e-commerce/landing/favourite-stores.html"
-                >
-                  My Favourite Stores
+                  Trang chủ
                 </a>
               </li>
               <li className="nav-item active" data-nav-item="data-nav-item">
                 <a
-                  className="nav-link"
-                  href="/products"
-                >
-                  Products
-                </a>
-              </li>
-              <li className="nav-item" data-nav-item="data-nav-item">
-                <a
-                  className="nav-link"
-                  href="wishlist"
-                >
-                  Wishlist
-                </a>
-              </li>
-              <li className="nav-item active" data-nav-item="data-nav-item">
-                <a
-                  className="nav-link"
+                  className="nav-link text-orange-400"
                   href="/account/trackorder"
                 >
-                  Track order
+                  Đơn hàng
                 </a>
               </li>
               <li className="nav-item" data-nav-item="data-nav-item">
                 <a
-                  className="nav-link pe-0"
+                  className="nav-link pe-0 text-orange-400"
                   href="/account/checkout"
                 >
-                  Checkout
+                  Thanh toán
                 </a>
               </li>
               <li

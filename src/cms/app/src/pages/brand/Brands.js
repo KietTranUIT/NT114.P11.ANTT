@@ -2,6 +2,7 @@ import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
 import { useState, useEffect } from "react";
 import {
+  formatDateTime,
   formatTimeStamp,
   deleteBrand,
   deleteBrands,
@@ -272,7 +273,7 @@ function Brands() {
               <>
                 <div className="mb-5">
                   <div className="mb-4">
-                    <h2 className="fw-bold" style={{ color: "#007bff" }}>
+                    <h2 className="fw-bold" style={{ color: "black" }}>
                       Thương hiệu
                     </h2>
                   </div>
@@ -310,7 +311,8 @@ function Brands() {
                                 <input
                                   type="search"
                                   id="search-input"
-                                  className="form-control"
+                                      className="form-control"
+                                      style={{color: 'black'}}
                                   placeholder="Tìm kiếm thương hiệu"
                                   onChange={handleSearchChange}
                                 />
@@ -346,14 +348,14 @@ function Brands() {
                         </div>
                       </div>
                       <div
-                        className="dropdown-search d-none"
+                        className="dropdown-search d-none" style={{width: "100%"}}
                         id="dropdown-element"
                       >
-                        <div className="dropdown-search-header">
-                          <span>brands</span>
+                        <div className="dropdown-search-header" style={{backgroundColor: "#e7e7e7"}}>
+                          <span style={{color: 'black'}}>Thương hiệu</span>
                           <button
                             type="button"
-                            class="btn-close btn-close-white"
+                            class="btn-close btn-close-black"
                             aria-label="Close"
                             onClick={handleCloseSearch}
                           ></button>
@@ -365,7 +367,7 @@ function Brands() {
                           <ul className="nav p-3 row">
                             {searchResult.length == 0 ? (
                               <li className="nav-item pb-2 col-12 mb-2">
-                                not found
+                                Không tìm thấy thương hiệu nào phù hợp
                               </li>
                             ) : (
                               <>
@@ -544,10 +546,10 @@ function Brands() {
                                     {item.description}
                                   </td>
                                   <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">
-                                    {formatTimeStamp(item.updatedAt)}
+                                    {formatDateTime(item.updatedAt)}
                                   </td>
                                   <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">
-                                    {formatTimeStamp(item.createdAt)}
+                                    {formatDateTime(item.createdAt)}
                                   </td>
                                   <td>
                                     <div className="d-flex gap-2 justify-content-center m-3">

@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 
 const { sequelize } = require('../../../config/db');
+const Order = require('./orders');
 
 var ShippingMethod = sequelize.define('shipping_methods', {
     id: {
@@ -31,5 +32,14 @@ var ShippingMethod = sequelize.define('shipping_methods', {
     underscored: true,
     timestamp: true,
 })
+
+// ShippingMethod.hasMany(Order);
+
+// Order.belongsTo(ShippingMethod, {
+//     foreignKey: {
+//         name: 'shippingMethod',
+//         type: DataTypes.INTEGER
+//     }
+// })
 
 module.exports = ShippingMethod;

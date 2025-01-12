@@ -109,7 +109,7 @@ function AddCategory({data}) {
             )}
                     <div className="d-flex justify-content-between mb-5">
                         <div className="add-product-header-left">
-                            <h1 className="fw-bold" style={{ color:"#007bff"}}>Thêm danh mục sản phẩm</h1>
+                            <h1 className="fw-bold" style={{ color:"black"}}>Thêm danh mục sản phẩm</h1>
                         </div>
                         <div className="d-flex align-items-center gap-2">
                         { isLoading ? (
@@ -134,7 +134,7 @@ function AddCategory({data}) {
                         <div className="col-8">
                             <h4 className="mb-3">Tên danh mục <span style={{color:"red"}}>*</span></h4>
                             <div className="mb-5">
-                                <input type="text" className="form-control" placeholder="Write name here..." onClick={handleRemoveErrorAlert} onChange={handleChangeInputname} id="name-category"></input>
+                                <input type="text" className="form-control" placeholder="Tên danh mục sản phẩm..." onClick={handleRemoveErrorAlert} onChange={handleChangeInputname} id="name-category"></input>
                                 <span className="text-danger d-none" id="name-category-error">error</span>
                             </div>
                             <h4 className="mb-3">Slug <span style={{color:"red"}}>*</span></h4>

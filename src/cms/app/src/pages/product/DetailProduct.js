@@ -3,7 +3,19 @@ import Header from "./../../components/header/Header";
 import { useState, useEffect, useRef } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import { useParams } from "react-router-dom";
-import { getBrand, updateLogoBrand, updateBrand } from "./../../helpers";
+import {
+  getBrand,
+  updateLogoBrand,
+  updateBrand,
+  getDetailProduct,
+  formatToVNDCustom,
+  uploadImage,
+  deleteImage,
+  getCategories,
+  getTags,
+  getBrandsV2,
+  updateProduct,
+} from "./../../helpers";
 import slugify from "slugify";
 import Dropzone from "react-dropzone";
 import Modal from "./../../components/modal/modal";
@@ -13,14 +25,21 @@ import Autocomplete from "@mui/joy/Autocomplete";
 import Button from "@mui/joy/Button";
 import { FormControl, FormLabel, Chip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import "./listproduct.css";
+import { usePagination, DOTS } from "../../helpers/pagination";
 
-function DetailProduct({ brandId }) {
+function DetailProduct({ productId }) {
   const editorRef = useRef(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [isDiscountEdit, setIsDiscountEdit] = useState(false);
   const [isUpload, setIsUpload] = useState(false);
   const [preview, setPreview] = useState({ pr: false, url: "" });
   const [upload, setUpload] = useState("");
   const [isShowModal, setIsShowModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [modalContent, setModalContent] = useState({
     type: "",
     title: "",
@@ -28,9 +47,9 @@ function DetailProduct({ brandId }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUpload, setIsLoadingUpload] = useState(false);
+  const [count, setCount] = useState(0);
 
-  // Init a category
-  const [brand, setBrand] = useState({
+  const [product, setProduct] = useState({
     id: "",
     name: "",
     description: "",
@@ -39,16 +58,66 @@ function DetailProduct({ brandId }) {
     createdAt: "",
     updatedAt: "",
     productCount: 0,
+    regularPrice: "",
+    quantity: "",
+    category: {
+      name: "",
+      id: "",
+    },
+    brand: {
+      name: "",
+      id: "",
+    },
+    product_medias: [],
+    tags_detail: [],
+    type_discount: "",
+    discount: 0,
+    startSale: "01-01-2025",
+    endSale: "01-01-2025",
+    product_reviews: [],
+    rating: 0,
   });
+  const [pagination, setPagination] = useState({
+    totalCount: 0,
+    siblingCount: 1,
+    currentPage: 1,
+    pageSize: 20,
+  });
+  let paginationRange = usePagination(pagination);
 
   useEffect(() => {
-    // const fetchBrand = async () => {
-    //   const result1 = await getBrand(brandId);
-    //   setBrand(result1.data);
-    //   console.log(result1.data);
-    // };
-    // fetchBrand();
+    const fetchData = async () => {
+      let httpRes = await getCategories();
+      setCategories(httpRes.data);
+
+      httpRes = await getTags();
+      setTags(httpRes.data);
+
+      httpRes = await getBrandsV2();
+      setBrands(httpRes.data);
+    };
+    fetchData();
   }, []);
+  function formatDateToDDMMYY(dateString) {
+    // Chuyển chuỗi ISO 8601 sang đối tượng Date
+    let date = dateString != null ? new Date(dateString) : new Date();
+
+    // Lấy ngày, tháng, năm từ đối tượng Date
+    const day = String(date.getDate()).padStart(2, "0"); // Đảm bảo ngày luôn có 2 chữ số
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0, nên cộng thêm 1
+    const year = String(date.getFullYear()); // Lấy 2 chữ số cuối của năm
+
+    // Trả về định dạng dd/mm/yy
+    return `${year}-${month}-${day}`;
+  }
+
+  useEffect(() => {
+    const fetchBrand = async () => {
+      const result1 = await getDetailProduct({ id: productId });
+      setProduct(result1.data);
+    };
+    fetchBrand();
+  }, [count]);
   // Handle click on edit button
   const handleEdit = (event) => {
     event.preventDefault();
@@ -59,6 +128,24 @@ function DetailProduct({ brandId }) {
   const handleCancel = (event) => {
     event.preventDefault();
     setIsEdit(false);
+  };
+
+  // Handle add tag to product
+  const handleAddTagProduct = async (event) => {
+    let tags = selectedTags.map((data) => {
+      return { productId, tagId: data.id };
+    });
+    const httpRes = await updateProduct(productId, { tags, tag_type: "add" });
+    setProduct(httpRes.data);
+    setSelectedTags([]);
+  };
+
+  // Delete image
+  const onDeleteImage = async (event) => {
+    event.preventDefault();
+    const id = event.target.dataset.imageId;
+    await deleteImage(id);
+    setCount(count + 1);
   };
 
   // Handle change input name
@@ -75,29 +162,38 @@ function DetailProduct({ brandId }) {
   };
 
   // Handle update brand
-  const handleUpdateBrand = async (event) => {
-    setIsLoading(true);
+  const handleUpdateProduct = async (event) => {
+    // setIsLoading(true);
     event.preventDefault();
     let updateParams = {};
-    let name = document.getElementById("name-category").value;
+    let name = document.getElementById("name-product").value;
     if (name == "") {
-      name = brand.name;
+      name = product.name;
     }
-    if (name != brand.name) {
+    if (name != product.name) {
       updateParams.name = name;
     }
-
-    const slug = document.getElementById("slug-category").value;
-    if (slug != brand.slug) {
+    const slug = document.getElementById("slug-product").value;
+    if (slug != product.slug) {
       updateParams.slug = slug;
     }
 
+    const regularPrice = document.getElementById("price-product").value;
+    if (regularPrice != product.regularPrice && regularPrice != "") {
+      updateParams.regularPrice = regularPrice;
+    }
+
+    const stock = document.getElementById("stock-product").value;
+    if (stock != product.stock) {
+      updateParams.stock = stock;
+    }
+
     const description = editorRef.current.getContent({ format: "text" });
-    if (description != brand.description) {
+    if (description != product.description) {
       updateParams.description = description;
     }
 
-    const result = await updateBrand(brand.id, updateParams);
+    const result = await updateProduct(product.id, updateParams);
     setIsLoading(false);
     // Check if error
     if (result.status === 422) {
@@ -107,29 +203,74 @@ function DetailProduct({ brandId }) {
           setModalContent({
             type: "error",
             title: "Lỗi",
-            message:
-              "Tên của thương hiệu đã tồn tại. Vui lòng chọn một tên khác",
+            message: "Tên sản phẩm đã tồn tại.",
           });
           setIsShowModal(true);
         } else {
           setModalContent({
             type: "error",
             title: "Lỗi",
-            message:
-              "Slug của thương hiệu đã tồn tại. Vui lòng chọn một slug khác",
+            message: "Slug sản phẩm đã tồn tại",
           });
           setIsShowModal(true);
         }
       });
     } else {
-      setBrand(result.data[0]);
+      console.log(result);
+      setProduct(result.data);
       setModalContent({
         type: "success",
         title: "Thành công",
-        message: "Thương hiệu đã được cập nhật!",
+        message: "Sản phẩm đã được cập nhật!",
       });
       setIsShowModal(true);
       setIsEdit(false);
+    }
+  };
+  const handleUpdateDiscount = async (event) => {
+    // setIsLoading(true);
+    event.preventDefault();
+    let updateParams = {};
+    let type_discount = document.getElementById("type-discount-product").value;
+
+    const discount = document.getElementById("discount-value-product").value;
+
+    const startSale = document.getElementById("startSale-product").value;
+    const endSale = document.getElementById("endSale-product").value;
+    updateParams = { type_discount, discount, startSale, endSale };
+
+    const result = await updateProduct(product.id, updateParams);
+    setIsLoading(false);
+    // Check if error
+    if (result.status === 422) {
+      const errors = result.response.data.errors;
+      errors.forEach((err) => {
+        if (err.source.pointer === "/name") {
+          setModalContent({
+            type: "error",
+            title: "Lỗi",
+            message: "Tên sản phẩm đã tồn tại.",
+          });
+          setIsShowModal(true);
+        } else {
+          setModalContent({
+            type: "error",
+            title: "Lỗi",
+            message: "Slug sản phẩm đã tồn tại",
+          });
+          setIsShowModal(true);
+        }
+      });
+    } else {
+      console.log(result);
+      setProduct(result.data);
+      setModalContent({
+        type: "success",
+        title: "Thành công",
+        message: "Sản phẩm đã được cập nhật!",
+      });
+      setIsShowModal(true);
+      setIsDiscountEdit(false);
     }
   };
 
@@ -139,10 +280,20 @@ function DetailProduct({ brandId }) {
   };
 
   // When drag file
-  const handleOnDropFile = (acceptedFiles) => {
-    let selectedFile = acceptedFiles[0];
-    setPreview({ pr: true, url: URL.createObjectURL(selectedFile) });
-    setUpload(selectedFile);
+  const handleOnDropFile = async (acceptedFiles) => {
+    let data = new FormData();
+    data.append("product", productId);
+    acceptedFiles.forEach((file) => {
+      data.append("file", file);
+    });
+    const httpRes = await uploadImage(data);
+    // if (httpRes.status != 201) {
+    //   alert("Thêm hình ảnh thất bại!");
+    //   return;
+    // }
+    // setPreview({ pr: true, url: URL.createObjectURL(selectedFile) });
+    // setUpload(selectedFile);
+    setCount(count + 1);
   };
 
   // Handle update image
@@ -154,33 +305,62 @@ function DetailProduct({ brandId }) {
     setIsUpload(false);
   };
 
-  const handleUploadLogoBrand = async (event) => {
-    setIsLoadingUpload(true);
-    event.preventDefault();
+  const handleChange = (event, value) => {
+    setSelectedTags(value); // Lưu danh sách các tag đã chọn
+    console.log("Selected Tags:", value); // In ra danh sách đã chọn
+  };
 
-    const data = new FormData();
-    data.append("file", upload);
-
-    const result = await updateLogoBrand(brandId, data);
-    setIsLoadingUpload(false);
-    if (result.status == 422) {
-      setModalContent({
-        type: "error",
-        title: "Lỗi",
-        message: `${result.response.data.errors[0]}`,
+  const filterTag = () => {
+    let t = tags.filter((tag) => {
+      let flag = false;
+      product.tags_detail.forEach((tp) => {
+        if (tp.id === tag.id) {
+          flag = true;
+          return;
+        }
       });
-      setIsShowModal(true);
-      setIsUpload(false);
-      return;
-    }
-    setBrand(result.data[0]);
-    setIsUpload(false);
-    setModalContent({
-      type: "success",
-      title: "Thành công",
-      message: `Hình ảnh được tải lên thành công!`,
+      if (!flag) {
+        return tag;
+      }
     });
-    setIsShowModal(true);
+    console.log("day chinh la demo ", t);
+    return t;
+  };
+
+  const handleUploadLogoBrand = async (event) => {
+    // setIsLoadingUpload(true);
+    // event.preventDefault();
+    // const data = new FormData();
+    // data.append("file", upload);
+    // const result = await updateLogoBrand(brandId, data);
+    // setIsLoadingUpload(false);
+    // if (result.status == 422) {
+    //   setModalContent({
+    //     type: "error",
+    //     title: "Lỗi",
+    //     message: `${result.response.data.errors[0]}`,
+    //   });
+    //   setIsShowModal(true);
+    //   setIsUpload(false);
+    //   return;
+    // }
+    // setBrand(result.data[0]);
+    // setIsUpload(false);
+    // setModalContent({
+    //   type: "success",
+    //   title: "Thành công",
+    //   message: `Hình ảnh được tải lên thành công!`,
+    // });
+    // setIsShowModal(true);
+  };
+  const handleRemoveSelectedTag = async (event) => {
+    event.preventDefault();
+    const id = event.currentTarget.dataset.tagIndex;
+    const httpRes = await updateProduct(productId, {
+      tag_type: "delete",
+      tags: id,
+    });
+    setProduct(httpRes.data);
   };
 
   return (
@@ -197,7 +377,7 @@ function DetailProduct({ brandId }) {
         {isShowModal && <div className="modal-backdrop fade show"></div>}
         <div className="d-flex justify-content-between mb-5">
           <div className="add-product-header-left">
-            <h1 className="fw-bold" style={{ color: "#007bff" }}>
+            <h1 className="fw-bold" style={{ color: "black" }}>
               Chi tiết sản phẩm
             </h1>
           </div>
@@ -267,7 +447,9 @@ function DetailProduct({ brandId }) {
               }}
             >
               <div className="border-bottom mb-3 d-flex justify-content-between">
-                <h3 className="mb-3 fw-semibold">General Information</h3>
+                <h3 className="mb-3 fw-semibold">
+                  
+                </h3>
                 <div>
                   {isEdit ? (
                     <></>
@@ -297,9 +479,9 @@ function DetailProduct({ brandId }) {
                   <input
                     type="text"
                     className="form-control mb-3 p-2"
-                    id="name-category"
-                    data-name={brand.name}
-                    placeholder={brand.name}
+                    id="name-product"
+                    data-name={product.name}
+                    placeholder={product.name}
                     onChange={handleChangeInputName}
                   ></input>
                 </>
@@ -307,7 +489,8 @@ function DetailProduct({ brandId }) {
                 <input
                   type="text"
                   className="form-control mb-3 p-2"
-                  id="name-category"
+                  id="name-product"
+                  value={product.name}
                 ></input>
               )}
               <div className="row">
@@ -317,7 +500,24 @@ function DetailProduct({ brandId }) {
                     className="form-select mb-3 p-2"
                     id="category-selects"
                   >
-                    <option value="none">-</option>
+                    <option value={product.category.id}>
+                      {product.category.name}
+                    </option>
+                    {isEdit ? (
+                      <>
+                        {categories.map((category, index) => {
+                          if (category.id != product.category.id) {
+                            return (
+                              <option value={category.id}>
+                                {category.name}
+                              </option>
+                            );
+                          }
+                        })}
+                      </>
+                    ) : (
+                      <></>
+                    )}
                     {/* {categories.map((item, index) => (
                               <option value={item.id}>{item.name}</option>
                             ))} */}
@@ -329,7 +529,22 @@ function DetailProduct({ brandId }) {
                     className="form-select mb-3 p-2"
                     id="category-selects"
                   >
-                    <option value="none">-</option>
+                    <option value={ product.brand === null ? (0):(product.brand.id)}>
+                      { product.brand === null ? (''):(product.brand.name)}
+                    </option>
+                    {isEdit ? (
+                      <>
+                        {brands.map((brand, index) => {
+                          if (product.brand.id != brand.id) {
+                            return (
+                              <option value={brand.id}>{brand.name}</option>
+                            );
+                          }
+                        })}
+                      </>
+                    ) : (
+                      <></>
+                    )}
                     {/* {categories.map((item, index) => (
                               <option value={item.id}>{item.name}</option>
                             ))} */}
@@ -342,8 +557,8 @@ function DetailProduct({ brandId }) {
                   <input
                     type="text"
                     className="form-control mb-3 p-2"
-                    id="slug-category"
-                    value={brand.slug}
+                    id="slug-product"
+                    value={product.slug}
                     readOnly
                   ></input>
                 </div>
@@ -351,61 +566,55 @@ function DetailProduct({ brandId }) {
               <div className="row">
                 <div className="col-4">
                   <h6 className="fw-semibold">Giá sản phẩm:</h6>
-                  <input
-                    type="text"
-                    className="form-control mb-3 p-2"
-                    id="slug-category"
-                    value={brand.slug}
-                    readOnly
-                  ></input>
+                  {isEdit ? (
+                    <>
+                      <input
+                        type="text"
+                        className="form-control mb-3 p-2"
+                        id="price-product"
+                        placeholder={formatToVNDCustom(product.regularPrice)}
+                      ></input>
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control mb-3 p-2"
+                      id="price-product"
+                      value={formatToVNDCustom(product.regularPrice)}
+                      readOnly
+                    ></input>
+                  )}
                 </div>
                 <div className="col-4">
                   <h6 className="fw-semibold">Sản phẩm trong kho</h6>
-                  <input
-                    type="number"
-                    className="form-control mb-3 p-2"
-                    id="slug-category"
-                  ></input>
-                </div>
-              </div>
-              <div className="row">
-                <div className="col-4">
-                  <h6 className="fw-semibold">Giá khuyến mãi:</h6>
-                  <input
-                    type="text"
-                    className="form-control mb-3 p-2"
-                    id="slug-category"
-                    value={brand.slug}
-                    readOnly
-                  ></input>
-                </div>
-                <div className="col-4">
-                  <h6 className="fw-semibold">Ngày bắt đầu:</h6>
-                  <input
-                    type="date"
-                    className="form-control mb-3 p-2"
-                    id="slug-category"
-                  ></input>
-                </div>
-                <div className="col-4">
-                  <h6 className="fw-semibold">Ngày kết thúc:</h6>
-                  <input
-                    type="date"
-                    className="form-control mb-3 p-2"
-                    id="slug-category"
-                  ></input>
+                  {isEdit ? (
+                    <input
+                      type="number"
+                      className="form-control mb-3 p-2"
+                      id="stock-product"
+                      placeholder={product.stock}
+                    ></input>
+                  ) : (
+                    <input
+                      type="number"
+                      className="form-control mb-3 p-2"
+                      id="stock-product"
+                      value={product.stock}
+                      readOnly
+                    ></input>
+                  )}
                 </div>
               </div>
               <div className="mb-3">
                 <h6 className="mb-2 fw-semibold">Mô tả</h6>
                 {isEdit ? (
                   <Editor
-                    id="description-category"
+                    id="description-product"
                     apiKey="nalj1qwh3ngb7zpj4u9hwsgg97w4ll0awqdypqjqfr11mt62"
                     onInit={(evt, editor) => (editorRef.current = editor)}
-                    initialValue={`<p>${brand.description}</p>`}
+                    initialValue={`<p>${product.description}</p>`}
                     init={{
-                      height: 300,
+                      height: 400,
                       menubar: false,
                       resize: false,
                       plugins: [
@@ -427,8 +636,8 @@ function DetailProduct({ brandId }) {
                     <textarea
                       class="form-control"
                       id="exampleFormControlTextarea1"
-                      rows="10"
-                      value={brand.description}
+                      rows="15"
+                      value={product.description}
                       readOnly
                     ></textarea>
                   </div>
@@ -444,7 +653,7 @@ function DetailProduct({ brandId }) {
                   </button>
                   <button
                     className="btn btn-primary d-flex gap-2 align-items-center"
-                    onClick={handleEdit}
+                    onClick={handleUpdateProduct}
                   >
                     Update
                   </button>
@@ -453,7 +662,6 @@ function DetailProduct({ brandId }) {
                 <></>
               )}
             </div>
-            
           </div>
           <div className="col-4">
             <div className="row g-2">
@@ -467,12 +675,15 @@ function DetailProduct({ brandId }) {
                           <Autocomplete
                             multiple
                             id="tags-default"
-                            placeholder="Favorites"
-                            options={["option1", "option2", "option3"]}
-                            getOptionLabel={(option) => option}
-                            defaultValue={["option1"]}
+                            placeholder="Tags"
+                            options={filterTag()}
+                            getOptionLabel={(option) => option.name}
+                            defaultValue={tags[0]}
                             className="mb-3"
-                            endDecorator={<Button>Add</Button>}
+                            endDecorator={
+                              <Button onClick={handleAddTagProduct}>Add</Button>
+                            }
+                            onChange={handleChange}
                           />
                           {/* <select className="form-select mb-3" id="tag-selects">
                             <option value="none">-</option>
@@ -522,36 +733,40 @@ function DetailProduct({ brandId }) {
                                 </div>
                               );
                             })} */}
-                            <div
-                              className="tag-items d-flex align-items-center p-1 gap-1"
-                              style={{
-                                backgroundColor: "#c7c7c7",
-                                borderRadius: "5px",
-                              }}
-                            >
-                              <span
-                                className="badge badge-primary pe-0 fw-semibold"
-                                style={{ color: "black" }}
-                              >
-                                demo
-                              </span>
-                              <a
-                                className="btn p-0 d-flex"
-                                href="#!"
-                                // data-tag-index={tag.id}
-                                // onClick={handleRemoveSelectedTag}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 384 512"
-                                  width="16px"
-                                  height="16px"
-                                  fill="black"
+                            {product.tags_detail.map((tag) => {
+                              return (
+                                <div
+                                  className="tag-items d-flex align-items-center p-1 gap-1"
+                                  style={{
+                                    backgroundColor: "#c7c7c7",
+                                    borderRadius: "5px",
+                                  }}
                                 >
-                                  <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
-                                </svg>
-                              </a>
-                            </div>
+                                  <span
+                                    className="badge badge-primary fw-semibold"
+                                    style={{ color: "black" }}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                  <a
+                                    className="btn p-0 d-flex"
+                                    href="#!"
+                                    data-tag-index={tag.product_tags.id}
+                                    onClick={handleRemoveSelectedTag}
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 384 512"
+                                      width="16px"
+                                      height="16px"
+                                      fill="black"
+                                    >
+                                      <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
+                                    </svg>
+                                  </a>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -560,190 +775,178 @@ function DetailProduct({ brandId }) {
                 </div>
                 <div className="card mb-3">
                   <div className="card-body">
-                    <h4 className="card-title mb-4 fw-bold">Options</h4>
+                    <h4 className="card-title mb-4 fw-bold">
+                      Khuyến mãi
+                      {product.startSale != null &&
+                      product.endSale != null &&
+                      new Date() > new Date(product.startSale) &&
+                      new Date() < new Date(product.endSale) ? (
+                        <span
+                          style={{
+                            color: "red",
+                            fontSize: "11px",
+                            marginLeft: "5px",
+                          }}
+                        >
+                          Sản phẩm đang khuyến mãi
+                        </span>
+                      ) : (
+                        <>
+                          <span
+                            style={{
+                              color: "gray",
+                              fontSize: "11px",
+                              marginLeft: "5px",
+                            }}
+                          >
+                            Sản phẩm chưa có khuyến mãi
+                          </span>
+                        </>
+                      )}
+                    </h4>
                     <div className="row gx-3">
                       <div className="col-12">
                         <div className="mb-4">
-                          <Autocomplete
-                            multiple
-                            id="tags-default"
-                            placeholder="Favorites"
-                            options={["option1", "option2", "option3"]}
-                            getOptionLabel={(option) => option}
-                            defaultValue={["option1"]}
-                            className="mb-3"
-                            endDecorator={<Button>Add</Button>}
-                          />
-                          {/* <select className="form-select mb-3" id="tag-selects">
-                            <option value="none">-</option>
-
-                            {/* {tags.map((item, index) => (
-                              <option
-                                value={item.id}
-                                data-tag-index={index}
-                                onClick={handleAddSelectedTag}
-                              >
-                                + {item.name}
-                              </option>
-                            ))} */}
-                          {/* </select> */}
-                          <div className="show-selected-tags d-flex gap-2 flex-wrap">
-                            {/* {selectedTags.map((tag) => {
-                              return (
-                                <div
-                                  className="tag-items d-flex align-items-center p-1 gap-1"
-                                  style={{
-                                    backgroundColor: "#c7c7c7",
-                                    borderRadius: "5px",
-                                  }}
-                                >
-                                  <span
-                                    className="badge badge-primary pe-0 fw-semibold"
-                                    style={{ color: "black" }}
-                                  >
-                                    {tag.name}
-                                  </span>
-                                  <a
-                                    className="btn p-0 d-flex"
-                                    href="#!"
-                                    data-tag-index={tag.id}
-                                    onClick={handleRemoveSelectedTag}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 384 512"
-                                      width="16px"
-                                      height="16px"
-                                      fill="black"
-                                    >
-                                      <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
-                                    </svg>
-                                  </a>
-                                </div>
-                              );
-                            })} */}
-                            <div
-                              className="tag-items d-flex align-items-center p-1 gap-1"
-                              style={{
-                                backgroundColor: "#c7c7c7",
-                                borderRadius: "5px",
-                              }}
-                            >
-                              <span
-                                className="badge badge-primary pe-0 fw-semibold"
-                                style={{ color: "black" }}
-                              >
-                                demo
-                              </span>
-                              <a
-                                className="btn p-0 d-flex"
-                                href="#!"
-                                // data-tag-index={tag.id}
-                                // onClick={handleRemoveSelectedTag}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 384 512"
-                                  width="16px"
-                                  height="16px"
-                                  fill="black"
-                                >
-                                  <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
-                                </svg>
-                              </a>
+                          <h6>Kiểu khuyến mãi</h6>
+                          <select
+                            className="form-select mb-3"
+                            id="type-discount-product"
+                          >
+                            {product.type_discount === "percent" ? (
+                              <>
+                                <option value="percent" selected>
+                                  Phần trăm
+                                </option>
+                                <option value="fixed">Giá cố định</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="percent">Phần trăm</option>
+                                <option value="fixed" selected>
+                                  Giá cố định
+                                </option>
+                              </>
+                            )}
+                          </select>
+                          <h6>Giá trị khuyến mãi</h6>
+                          {isDiscountEdit ? (
+                            <input
+                              type="text"
+                              className="form-control mb-3 p-2"
+                              id="discount-value-product"
+                              placeholder={product.discount}
+                            ></input>
+                          ) : (
+                            <input
+                              type="text"
+                              className="form-control mb-3 p-2"
+                              id="discount-value-product"
+                              value={product.discount}
+                              readOnly
+                            ></input>
+                          )}
+                          <div className="row">
+                            <div className="col-6">
+                              {" "}
+                              <h6 className="fw-semibold">Ngày bắt đầu:</h6>
+                              {isDiscountEdit ? (
+                                <>
+                                  <input
+                                    type="date"
+                                    className="form-control mb-3 p-2"
+                                    id="startSale-product"
+                                    placeholder={formatDateToDDMMYY(
+                                      product.startSale
+                                    )}
+                                  ></input>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="date"
+                                    className="form-control mb-3 p-2"
+                                    id="startSale-product"
+                                    value={formatDateToDDMMYY(
+                                      product.startSale
+                                    )}
+                                    readOnly
+                                  ></input>
+                                </>
+                              )}
+                            </div>
+                            <div className="col-6">
+                              <h6 className="fw-semibold">Ngày kết thúc:</h6>
+                              {isDiscountEdit ? (
+                                <>
+                                  <input
+                                    type="date"
+                                    className="form-control mb-3 p-2"
+                                    id="endSale-product"
+                                    placeholder={formatDateToDDMMYY(
+                                      product.endSale
+                                    )}
+                                  ></input>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="date"
+                                    className="form-control mb-3 p-2"
+                                    id="endSale-product"
+                                    value={formatDateToDDMMYY(product.endSale)}
+                                    readOnly
+                                  ></input>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                    {isDiscountEdit ? (
+                      <div className="d-flex gap-2 mb-2">
+                        <button
+                          className="btn btn-secondary d-flex gap-2 align-items-center"
+                          onClick={() => {
+                            setIsDiscountEdit(false);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="btn btn-primary d-flex gap-2 align-items-center"
+                          onClick={handleUpdateDiscount}
+                        >
+                          Update
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-primary d-flex gap-2 align-items-center"
+                        onClick={() => {
+                          setIsDiscountEdit(true);
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          class="bi bi-pen"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
+                        </svg>
+                        Chỉnh sửa
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                {/* {variants &&
-                    variants.map((variant, index) => {
-                        return (
-                        <div className="card mb-3">
-                            <div className="card-body">
-                            <h4 className="card-title mb-4 fw-bold">
-                                Variant {index + 1}
-                                <button
-                                className="btn btn-link text-decoration-none fw-semibold p-0 ms-3"
-                                data-variant-index={index}
-                                onClick={handleRemoveVariant}
-                                >
-                                Remove
-                                </button>
-                            </h4>
-                            <div className="row gx-3">
-                                {variant.options.map((option, optionIndex) => {
-                                return (
-                                    <div className="col-12">
-                                    <div className="mb-4">
-                                        <div className="d-flex flex-wrap mb-2">
-                                        <h5 className="mb-0 me-2 fs-6 text-body-highlight fw-semibold">
-                                            Lựa chọn {optionIndex + 1}
-                                            <button
-                                            className="btn btn-link text-decoration-none fw-semibold p-0 ms-2"
-                                            style={{ fontSize: "11px" }}
-                                            data-variant-index={index}
-                                            data-option-index={optionIndex}
-                                            onClick={handleRemoveOption}
-                                            >
-                                            Remove
-                                            </button>
-                                        </h5>
-                                        </div>
-                                        <select
-                                        data-variant-index={index}
-                                        data-option-index={optionIndex}
-                                        className="form-select mb-3"
-                                        onChange={handleOnChangeSelect}
-                                        >
-                                        <option value="none">-</option>
-                                        {attributes.map((item, index) => (
-                                            <option value={item.id}>
-                                            {item.name}
-                                            </option>
-                                        ))}
-                                        </select>
-                                        <textarea
-                                        className="form-control"
-                                        id="exampleFormControlTextarea1"
-                                        data-variant-index={index}
-                                        data-option-index={optionIndex}
-                                        onChange={handleOnChangeInput}
-                                        rows="3"
-                                        ></textarea>
-                                    </div>
-                                    </div>
-                                );
-                                })}
-                            </div>
-                            <button
-                                type="button"
-                                style={{ width: "100%" }}
-                                className="btn btn-outline-primary"
-                                data-variant-index={index}
-                                onClick={handleAddOption}
-                            >
-                                Thêm lựa chọn khác
-                            </button>
-                            </div>
-                        </div>
-                        );
-                    })} */}
-                <button
-                  className="btn btn-primary mb-5"
-                  //   onClick={handleAddVariant}
-                  style={{ width: "100%" }}
-                >
-                  Thêm variant
-                </button>
               </div>
             </div>
           </div>
           <div className="col-12 mb-4 mt-4">
-          <div
+            <div
               className="bg-white ps-4 pt-4 pe-3 pb-2"
               style={{
                 borderRadius: "15px",
@@ -754,16 +957,27 @@ function DetailProduct({ brandId }) {
                 <h3 className="mb-3 fw-semibold">Media</h3>
               </div>
               <div className="mt-3 d-flex gap-4 mb-3 flex-wrap">
-                <div className="dropzone-preview mb-2">
-                  <div className="bg-white">
-                    <img src={brand.logo} width="170px" height="170px"></img>
-                  </div>
-                </div>
-                <div className="dropzone-preview mb-2">
-                  <div className="bg-white">
-                    <img src={brand.logo} width="170px" height="170px"></img>
-                  </div>
-                </div>
+                {product.product_medias.map((media) => {
+                  return (
+                    <div className="dropzone-preview mb-2">
+                      <div className="bg-white position-relative image-hover-container">
+                        <img
+                          src={media.url}
+                          width="170px"
+                          height="170px"
+                          className="image-hover-img"
+                        ></img>
+                        <button
+                          className="btn btn-danger position-absolute top-50 start-50 translate-middle image-hover-button"
+                          onClick={onDeleteImage}
+                          data-image-id={media.id}
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
                 <div
                   className="dropzone mb-3 ms-3"
                   style={{ width: "150px", height: "150px" }}
@@ -794,7 +1008,8 @@ function DetailProduct({ brandId }) {
                   </div> */}
                   <Dropzone
                     onDrop={handleOnDropFile}
-                    multiple={false}
+                    multiple={true}
+                    maxFiles={8}
                     accept={"image/png"}
                   >
                     {({ getRootProps, getInputProps }) => (
@@ -828,466 +1043,80 @@ function DetailProduct({ brandId }) {
               </div>
             </div>
           </div>
-          <div className="col-12 bg-white pt-4 mb-5" style={{borderRadius:"15px", boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px"}}>
-              <div className="mb-4">
-                <div className="border-bottom mb-4">
-                    <h3 className="fw-semibold">Variants</h3>
-                </div>
-                <div className="d-flex justify-content-between">
-                  {/* <div className="search-box">
-                      <form id="form1">
-                        <div className="input-group d-flex flex-column">
-                          <div className="d-flex align-items-center position-relative">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 512 512"
-                              width="16px"
-                              height="16px"
-                              className="position-absolute ms-3"
-                            >
-                              <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
-                            </svg>
-                            <input
-                              type="search"
-                              id="search-input"
-                              className="form-control"
-                              placeholder="Tìm kiếm sản phẩm"
-                              onChange={handleSearchChange}
-                            />
-                          </div>
-                        </div>
-                      </form>
-                    </div> */}
-                  <div className="d-flex gap-3">
-                    <FormControl>
-                      <FormLabel>Search</FormLabel>
-                      <Input
-                        placeholder="Tìm kiếm sản phẩm"
-                        startDecorator={<SearchIcon />}
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel>Status</FormLabel>
-                      <Autocomplete
-                        placeholder="Filter by status"
-                        options={["option1", "option2"]}
-                        sx={{ width: 150 }}
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel>Category</FormLabel>
-                      <Autocomplete
-                        placeholder="All"
-                        options={["option1", "option2"]}
-                        sx={{ width: 150 }}
-                      />
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel>Brand</FormLabel>
-                      <Autocomplete
-                        placeholder="All"
-                        options={["option1", "option2"]}
-                        sx={{ width: 150 }}
-                      />
-                    </FormControl>
-                  </div>
-                  <div className="d-flex gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      // onClick={handleRemoveSelectedBrands}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        fill="currentColor"
-                        class="bi bi-trash"
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      // onClick={handleAddProduct}
-                    >
-                      <span className="fw-bold">+ </span>Thêm
-                    </button>
-                  </div>
-                </div>
-                <div className="dropdown-search d-none" id="dropdown-element">
-                  <div className="dropdown-search-header">
-                    <span>brands</span>
-                    <button
-                      type="button"
-                      class="btn-close btn-close-white"
-                      aria-label="Close"
-                      // onClick={handleCloseSearch}
-                    ></button>
-                  </div>
-                  <div id="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                    {/* <ul className="nav p-3 row">
-                        {searchResult.length == 0 ? (
-                          <li className="nav-item pb-2 col-12 mb-2">
-                            not found
-                          </li>
-                        ) : (
-                          <>
-                            {searchResult.map((item, index) => {
+          <div className="reviews-container mb-5 border rounded">
+            <h2>Đánh giá sản phẩm</h2>
+            <table className="reviews-table">
+              <thead>
+                <tr>
+                  <th>Khách hàng</th>
+                  <th>Đánh giá</th>
+                  <th>Nội dung</th>
+                  <th>Thời gian</th>
+                </tr>
+              </thead>
+              <tbody>
+                {product.product_reviews.map((review) => {
+                  return (
+                    <tr>
+                      <td>{review.user.email}</td>
+                      <td>
+                        <div className="rate">
+                          {[1, 2, 3, 4, 5].map((key, index) => {
+                            if (index < Math.round(product.rating)) {
                               return (
-                                <li className="nav-item pb-2 col-12 mb-2">
-                                  <a className="d-flex gap-3 text-decoration-none text-reset">
-                                    <img
-                                      src="https://res.cloudinary.com/dfgnimhoi/image/upload/v1731375811/brands/uqt9gebkizucgxlq71eh.jpg"
-                                      width="70px"
-                                      height="70px"
-                                    ></img>
-                                    <div>
-                                      <span className="fw-bold">
-                                        {item.name}
-                                      </span>
-                                      <p
-                                        className="text-truncate"
-                                        style={{ maxWidth: "400px" }}
-                                      >
-                                        {item.description}
-                                      </p>
-                                    </div>
-                                  </a>
-                                </li>
-                              );
-                            })}
-                          </>
-                        )}
-                      </ul> */}
-                  </div>
-                </div>
-              </div>
-              <div
-                style={{ fontSize: "13px" }}
-                className="mb-3 bg-white border-top border-bottom border-translucent position-relative top-1"
-              >
-                <div className="table-responsive scrollbar">
-                  <table className="table fs-9 mb-0">
-                    <thead>
-                      <tr className="" style={{ fontSize: "15px" }}>
-                        <th
-                          className="white-space-nowrap fs-9 align-middle pl-1"
-                          style={{ maxWidth: "20px", width: "18px" }}
-                        >
-                          <div className="form-check mb-0 fs-8">
-                            <input
-                              className="form-check-input"
-                              id="checkbox-bulk-products-select"
-                              type="checkbox"
-                              data-bulk-select='{"body":"products-table-body"}'
-                              // onClick={handleInputCheckAll}
-                            />
-                          </div>
-                        </th>
-                        <th
-                          className="sort white-space-nowrap align-middle ps-4"
-                          scope="col"
-                          style={{ width: "150px" }}
-                          data-sort="brand"
-                        ></th>
-                        <th
-                          className="sort white-space-nowrap align-middle ps-1"
-                          scope="col"
-                          style={{ width: "150px" }}
-                          data-sort="brand"
-                        >
-                          Product Name
-                          <a
-                          //   onClick={(event) => {
-                          //     event.preventDefault();
-                          //     let copy = brands;
-                          //     copy[pagination.currentPage - 1].sort((a, b) =>
-                          //       a.name.localeCompare(b.name)
-                          //     );
-                          //     setBrands(copy);
-                          //     console.log(copy);
-                          //   }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 320 512"
-                              fill="gray"
-                              width="12px"
-                              height="12px"
-                              className="ms-1 mb-1"
-                            >
-                              <path d="M137.4 41.4c12.5-12.5 32.8-12.5 45.3 0l128 128c9.2 9.2 11.9 22.9 6.9 34.9s-16.6 19.8-29.6 19.8L32 224c-12.9 0-24.6-7.8-29.6-19.8s-2.2-25.7 6.9-34.9l128-128zm0 429.3l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8l256 0c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128c-12.5 12.5-32.8 12.5-45.3 0z" />
-                            </svg>
-                          </a>
-                        </th>
-                        <th
-                          className="sort text-end pe-4"
-                          scope="col"
-                          data-sort="price"
-                          style={{ width: "120px" }}
-                        >
-                          Price
-                        </th>
-                        <th
-                          className="sort text-start"
-                          scope="col"
-                          data-sort="price"
-                          style={{ width: "120px" }}
-                        >
-                          Category
-                        </th>
-                        <th
-                          className="sort text-start"
-                          scope="col"
-                          data-sort="price"
-                          style={{ width: "120px" }}
-                        >
-                          Brand
-                        </th>
-                        <th
-                          className="sort text-start"
-                          scope="col"
-                          style={{ width: "170px" }}
-                        >
-                          Tags
-                        </th>
-                        <th
-                          className="sort fs-8 text-end"
-                          scope="col"
-                          style={{ width: "130px" }}
-                        >
-                          Published On
-                        </th>
-                        <th
-                          className="sort text-end align-middle pe-0 ps-4"
-                          scope="col"
-                        ></th>
-                      </tr>
-                    </thead>
-                    <tbody className="list" id="products-table-body">
-                      {/* {products[pagination.currentPage - 1].map(
-                          (product, index) => (
-                            <tr className="position-static">
-                              <td className="fs-9 align-middle">
-                                <div className="form-check mb-0 fs-8">
-                                  <input
-                                    value={product.id}
-                                    className="form-check-input select-remove-input"
-                                    type="checkbox"
-                                  />
-                                </div>
-                              </td>
-                              <td className="product align-middle ps-4">
-                                <img
-                                  className="p-2 border"
-                                  src={product.product_medias.map(
-                                    (media_item) => {
-                                      if (media_item.isMain == true) {
-                                        return media_item.url;
-                                      }
-                                    }
-                                  )}
-                                  alt="error!"
-                                  width="90px"
-                                  height="90px"
-                                ></img>
-                              </td>
-                              <td className="product align-middle ps-1">
-                                <a
-                                  className="fw-semibold line-clamp-3 mb-0"
-                                  href="../../../apps/e-commerce/landing/product-details.html"
+                                <svg
+                                  className="svg-inline--fa fa-star text-warning"
+                                  aria-hidden="true"
+                                  focusable="false"
+                                  data-prefix="fas"
+                                  data-icon="star"
+                                  role="img"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 576 512"
+                                  data-fa-i2svg=""
+                                  width="20px"
+                                  height="20px"
+                                  key={index}
                                 >
-                                  {product.name}
-                                </a>
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary pe-4 text-end">
-                                {formatToVNDCustom(product.regularPrice)}
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary text-start">
-                                {product.category === null ? (
-                                  <></>
-                                ) : (
-                                  product.category.name
-                                )}
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary text-start">
-                                {product.brand === null ? (
-                                  <></>
-                                ) : (
-                                  product.brand.name
-                                )}
-                              </td>
-                              <td className="text-body-quaternary text-start pt-4">
-                                <div className="d-flex gap-2 flex-wrap">
-                                  {product.tags_detail.map((tag) => {
-                                    return (
-                                      <div
-                                        className="tag-items d-flex align-items-center p-1 gap-1"
-                                        style={{
-                                          backgroundColor: "#c7c7c7",
-                                          borderRadius: "5px",
-                                        }}
-                                      >
-                                        <span
-                                          className="badge badge-primary fw-semibold"
-                                          style={{ color: "black" }}
-                                        >
-                                          { tag.name }
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </td>
-                              <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 text-end">
-                                {formatTimeStamp(product.createdAt)}
-                              </td>
-                              <td>
-                                <div className="d-flex gap-2 justify-content-center m-3">
-                                  <button
-                                    className="btn btn-primary"
-                                    data-id={product.id}
-                                    onClick={handleEditProduct}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      class="bi bi-pen"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    className="btn btn-danger"
-                                    // data-id={item.id}
-                                    // onClick={handleRemoveBrand}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      class="bi bi-trash"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        )} */}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="row align-items-center justify-content-between py-2 pe-0 fs-9">
-                  <div className="col-auto d-flex align-items-center">
-                    <p
-                      className="mb-0 d-none d-sm-block me-3 fw-semibold text-body"
-                      data-list-info="data-list-info"
-                    >
-                      {/* {(pagination.currentPage - 1) * pagination.pageSize + 1}{" "}
-                        to {brands[pagination.currentPage - 1].length}{" "} */}
-                      <span style={{ color: "gray", fontSize: "11px" }}>
-                        Items of
-                      </span>{" "}
-                      {/* {pagination.totalCount} */}
-                    </p>
-                  </div>
-                  <div className="col-auto d-flex gap-2">
-                    <button
-                      className="page-link"
-                      style={{
-                        border: "none",
-                        backgroundColor: "transparent",
-                      }}
-                      data-list-pagination="prev"
-                      // onClick={handlePrevClick}
-                    >
-                      <svg
-                        className="svg-inline--fa fa-chevron-left"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="fas"
-                        data-icon="chevron-left"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 320 512"
-                        fill="currentColor"
-                        width="16px"
-                        height="16px"
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l192 192c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 246.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-192 192z"
-                        ></path>
-                      </svg>
-                    </button>
-                    {/* <ul class="mb-0 pagination btn-group d-flex gap-1">
-                        {paginationRange.map((pageNumber) => {
-                          if (pageNumber === DOTS) {
-                            return <li className="btn">&#8230;</li>;
-                          }
-                          return (
-                            <li>
-                              <button
-                                className={
-                                  pageNumber === pagination.currentPage
-                                    ? "btn btn-primary"
-                                    : "btn btn-outline-primary"
-                                }
-                                type="button"
-                                data-page={pageNumber}
-                                onClick={handleChangePage}
+                                  <path
+                                    fill="currentColor"
+                                    d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"
+                                  ></path>
+                                </svg>
+                              );
+                            }
+                            return (
+                              <svg
+                                className="svg-inline--fa fa-star text-warning-light fs-9 me-1"
+                                data-bs-theme="light"
+                                aria-hidden="true"
+                                focusable="false"
+                                data-prefix="far"
+                                data-icon="star"
+                                role="img"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 576 512"
+                                width="20px"
+                                height="20px"
+                                key={index}
                               >
-                                {pageNumber}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul> */}
-                    <button
-                      className="p-0"
-                      style={{
-                        border: "none",
-                        backgroundColor: "transparent",
-                      }}
-                      data-list-pagination="next"
-                      disabled=""
-                      // onClick={handleNextClick}
-                    >
-                      <svg
-                        class="svg-inline--fa fa-chevron-right"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="fas"
-                        data-icon="chevron-right"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 320 512"
-                        fill="currentColor"
-                        width="16px"
-                        height="16px"
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"
-                        ></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+                                <path
+                                  fill="currentColor"
+                                  d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.3 1.7l-137-73.2L151 509.1c-8.1 4.3-17.9 3.7-25.3-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3l153.2-22.6L266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99 217.9 184.9 303c5.5 5.5 8.1 13.3 6.8 21L171.4 443.7l105.2-56.2c7.1-3.8 15.6-3.8 22.6 0l105.2 56.2L384.2 324.1c-1.3-7.7 1.2-15.5 6.8-21l85.9-85.1L358.6 200.5c-7.8-1.2-14.6-6.1-18.1-13.3L287.9 79z"
+                                ></path>
+                              </svg>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td className="truncate">{review.content}</td>
+                      <td>{ formatDateToDDMMYY(review.createdAt) }</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </form>
     </>

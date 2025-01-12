@@ -6,8 +6,10 @@ import {
   deleteCartItem,
 } from "@/app/lib/helps";
 import { useEffect, useState } from "react";
+import { useCart } from "../context/cartContext";
 
 const TableCart = () => {
+  const { updateContextCart } = useCart();
   const [cart, setCart] = useState({ cart_items: [] });
   const [summary, setSummary] = useState({
     subtotal: 0,
@@ -58,6 +60,7 @@ const TableCart = () => {
   }, [cart]);
 
   const addItem = async (event) => {
+    event.preventDefault();
     const itemId = event.currentTarget.dataset.itemId;
     const httpRes = await updateCart(cart.id, { itemId, quantity: 1 });
     if (httpRes.status === 200) {
@@ -72,6 +75,7 @@ const TableCart = () => {
       }
       setCart(newCart);
       updateSummary();
+      updateContextCart(1);
     }
   };
 
@@ -101,14 +105,18 @@ const TableCart = () => {
         }
         setCart(newCart);
         updateSummary();
+        updateContextCart(-1);
       }
     }
   };
 
   // Delete a item
   const deleteItem = async (event) => {
+    event.preventDefault();
+    let quantity = 0;
+    console.log(quantity);
     const itemId = event.currentTarget.dataset.itemId;
-    alert(itemId);
+    console.log("item id = ", itemId);
     const httpRes = await deleteCartItem(cart.id, itemId);
     if (httpRes.status === 200) {
       setCart((prevCart) => {
@@ -116,7 +124,9 @@ const TableCart = () => {
           if (item.id != itemId) {
             return item;
           }
+          updateContextCart(-item.quantity);
         });
+        newCart = newCart.filter((item) => item !== undefined);
         if (newCart.length <= 0) {
           newCart = { cart_items: [] };
         }
@@ -150,7 +160,7 @@ const TableCart = () => {
                     style={{ width: "30%", minWidth: "250px" }}
                     data-sort="products"
                   >
-                    PRODUCTS
+                    Sản phẩm
                   </th>
                   <th
                     className="sort text-start p-3"
@@ -158,7 +168,7 @@ const TableCart = () => {
                     data-sort="color"
                     style={{ width: "20%" }}
                   >
-                    VARIANTS
+                    Loại
                   </th>
                   <th
                     className="sort align-middle text-start asc p-3"
@@ -166,7 +176,7 @@ const TableCart = () => {
                     data-sort="price"
                     style={{ width: "20%" }}
                   >
-                    PRICE
+                    Giá
                   </th>
                   <th
                     className="sort align-middle text-start asc p-3"
@@ -174,7 +184,7 @@ const TableCart = () => {
                     data-sort="price"
                     style={{ width: "15%" }}
                   >
-                    QUANTITY
+                    Số lượng
                   </th>
                   <th
                     className="sort align-middle text-start asc p-3"
@@ -182,7 +192,7 @@ const TableCart = () => {
                     data-sort="price"
                     style={{ width: "20%" }}
                   >
-                    TOTAL
+                    Tổng
                   </th>
                   <th
                     className="sort text-center p-3"
@@ -228,7 +238,7 @@ const TableCart = () => {
                           : ""}
                       </td>
                       <td className="p-3 text-sm">
-                        {item.product_variant != null
+                        {/* {item.product_variant != null
                           ? item.product_variant.startSale != null &&
                             item.product_variant.endSale != null &&
                             new Date() >
@@ -241,7 +251,8 @@ const TableCart = () => {
                             new Date() > new Date(item.product.startSale) &&
                             new Date() < new Date(item.product.endSale)
                           ? formatMoney(item.product.salePrice)
-                          : formatMoney(item.product.regularPrice)}
+                          : formatMoney(item.product.regularPrice)} */}
+                        { formatMoney(item.product.regularPrice)}
                       </td>
                       <td>
                         <div className="flex gap-3 items-center p-3">
@@ -386,7 +397,7 @@ const TableCart = () => {
             <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow">
               <div className="flex items-center justify-between mb-3">
                 <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900">
-                  Summary
+                  Tổng kết
                 </h5>
               </div>
               <div>
@@ -454,19 +465,19 @@ const TableCart = () => {
               </div>
               <div className="mt-10">
                 <div className="flex justify-between mb-2">
-                  <h5 className="text-lg font-medium">Subtotal :</h5>
+                  <h5 className="text-lg font-medium">Tổng :</h5>
                   <h5 className="text-lg font-medium">
                     {formatMoney(summary.subtotal)}
                   </h5>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <h5 className="text-lg font-medium">Discount :</h5>
+                  <h5 className="text-lg font-medium">Giảm giá :</h5>
                   <h5 className="text-lg font-medium text-red-600">
                     -{formatMoney(summary.discount)}
                   </h5>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <h5 className="text-lg font-medium">Tax :</h5>
+                  <h5 className="text-lg font-medium">Thuế :</h5>
                   <h5 className="text-lg font-medium">
                     {formatMoney(summary.tax)}
                   </h5>
@@ -477,7 +488,7 @@ const TableCart = () => {
                 </div> */}
               </div>
               <div className="flex justify-between mt-7 mb-5">
-                <h4 className="text-xl font-bold">Total:</h4>
+                <h4 className="text-xl font-bold">Tổng thanh toán:</h4>
                 <h4 className="text-xl font-bold">
                   {formatMoney(
                     summary.subtotal - summary.discount + summary.tax
@@ -486,15 +497,14 @@ const TableCart = () => {
               </div>
               <hr />
               <div className="mt-5">
-              <a
-                href="/account/checkout"
-                className="block text-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-              >
-                Checkout
-              </a>
+                <a
+                  href="/account/checkout"
+                  className="block text-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg text-base px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                >
+                  Thanh toán
+                </a>
+              </div>
             </div>
-            </div>
-            
           </div>
           <div></div>
         </div>

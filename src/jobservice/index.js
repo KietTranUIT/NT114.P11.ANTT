@@ -6,6 +6,7 @@ const keys = require('./config/key');
 const { port } = keys;
 const routerV1 = require('./api/v1/routes');
 const rd = require('./config/redis');
+const backgroundJobs = require('./api/v1/services/job');
 
 const apiVersions = {
     "1.0.0": "/v1",
@@ -36,6 +37,7 @@ app.use('/v1', routerV1);
 
 // connect to redis
 rd.connectRedis(rd.redisClient);
+backgroundJobs.scheduleJob();
 
 app.listen(port, () => {
     console.log(

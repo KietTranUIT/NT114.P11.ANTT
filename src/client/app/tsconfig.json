@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     "app/lib/placeholder-data.ts",
     "scripts/seed.js"
-, "app/ui/login-form.js", "app/ui/components/openmap/map.js", "app/ui/components/products/products.js", "app/products/[name]/page.js", "app/products/page.js", "app/ui/components/card/card.js", "app/ui/components/modal/modal.js", "app/ui/components/product/product.js", "app/account/cart/page.js", "app/ui/components/checkout/checkout.js"  ],
+, "app/ui/login-form.js", "app/ui/components/openmap/map.js", "app/ui/components/products/products.js", "app/products/[name]/page.js", "app/products/page.js", "app/ui/components/card/card.js", "app/ui/components/modal/modal.js", "app/ui/components/product/product.js", "app/account/cart/page.js", "app/ui/components/checkout/checkout.js", "app/page.jS", "app/ui/components/header/header.js", "app/ui/components/filter/filter.js", "app/ui/components/order/order.js", "app/account/trackorder/page.js", "app/ui/components/search/search.js", "app/ui/register-form.js"  ],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 import Panel from "./../../components/panel/Panel";
 import Header from "./../../components/header/Header";
 import { useState, useEffect } from "react";
-import { formatTimeStamp, getCategories, removeCategory, removeCategories, searchCategory } from "./../../helpers";
+import { formatDateTime, formatTimeStamp, getCategories, removeCategory, removeCategories, searchCategory } from "./../../helpers";
 import { useNavigate } from "react-router-dom";
 import { debounce } from "lodash"
 import AddCategory from "./AddCategory";
@@ -155,7 +155,7 @@ function Categories() {
             )}
                 <Header />
                 <Panel navId={'categories-nav'}/>
-                <div className="content">                    
+                <div className="content" style={{height: "1000px"}}>                    
                 {showModal && (
                     <div className="modal-backdrop fade show"></div>
                 )}
@@ -172,7 +172,7 @@ function Categories() {
                         <>
                             <div className="mb-5">
                         <div className="mb-4">
-                            <h2 className="fw-bold" style={{ color:"#007bff"}}>Danh mục sản phẩm</h2>
+                            <h2 className="fw-bold" style={{ color:"black"}}>Danh mục sản phẩm</h2>
                         </div>
                         <ul className="nav nav-links mx-n3 mb-3">
                         <li className="nav-item">
@@ -192,7 +192,7 @@ function Categories() {
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16px" height="16px" className="position-absolute ms-3">
                                                     <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/>
                                                 </svg>
-                                                <input type="search" id="search-input" className="form-control" placeholder="Tìm kiếm danh mục sản phẩm" onChange={handleSearchChange}/>
+                                                <input style={{color: 'black'}} type="search" id="search-input" className="form-control" placeholder="Tìm kiếm danh mục sản phẩm" onChange={handleSearchChange}/>
                                             </div>
                                         </div>
                                     </form>
@@ -239,8 +239,8 @@ function Categories() {
                             <td className="product align-middle ps-4"><a className="fw-semibold line-clamp-3 mb-0" href="../../../apps/e-commerce/landing/product-details.html">{item.name}</a></td>
                             <td className="product align-middle ps-4">{item.slug}</td>
                             <td className="align-middle white-space-nowrap text-body-quaternary fs-9 fw-semibold">{item.description}</td>
-                            <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.updatedAt)}</td>
-                            <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatTimeStamp(item.createdAt)}</td>
+                            <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatDateTime(item.updatedAt)}</td>
+                            <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85">{formatDateTime(item.createdAt)}</td>
                             <td className="d-flex gap-2">
                               <button className="btn btn-primary" data-id={item.id} onClick={handleEditCategory}>
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
@@ -261,7 +261,7 @@ function Categories() {
                   </div>
                   <div className="row align-items-center justify-content-between py-2 pe-0 fs-9">
                     <div className="col-auto d-flex align-items-center">
-                      <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body" data-list-info="data-list-info">Total items: {categories.length}</p>
+                      <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body" data-list-info="data-list-info">Tổng: {categories.length}</p>
                         { viewLess ? (    
                             <a className="fw-semibold" href="#" onClick={handleViewLess} data-list-view="less">
                                 View less<svg width="7px" className="svg-inline--fa fa-angle-right ms-1" data-fa-transform="down-1" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="angle-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg="" style={{transformOrigin: "0.3125em 0.5625em"}}><g transform="translate(160 256)"><g transform="translate(0, 32)  scale(1, 1)  rotate(0 0 0)"><path fill="currentColor" d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" transform="translate(-160 -256)"></path></g></g></svg>

@@ -25,6 +25,7 @@ module.exports.uploadMultipleFile = (fieldName, limit) => {
                 next()
                 return
             }
+            console.log(err)
             res.status(400).json({message: "fieldName isn't accepted!"})
         })
     }

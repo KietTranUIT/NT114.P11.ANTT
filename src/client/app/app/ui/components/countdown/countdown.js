@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useState, useEffect } from "react";
 const CountDown = ({ endTime }) => {
   const [countDown, setCountDown] = useState({
@@ -29,7 +29,7 @@ const CountDown = ({ endTime }) => {
           ),
           minute: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           second: Math.floor((distance % (1000 * 60)) / 1000),
-        })
+        });
       }
       return () => clearInterval(interval);
     }, 1000);
@@ -37,16 +37,22 @@ const CountDown = ({ endTime }) => {
 
   return (
     <>
-      <p className="text-red-600 font-semibold mb-5 mb-lg-0">
-        Special offer ends in{" "}
-        {`${countDown.day.toString().padStart(2, "0")} ngày ${countDown.hour
-          .toString()
-          .padStart(2, "0")} giờ ${countDown.minute
-          .toString()
-          .padStart(2, "0")} phút ${countDown.second
-          .toString()
-          .padStart(2, "0")} giấy`}
-      </p>
+      <div className="">
+        <div className="bg-gray-300 py-3 ps-2">
+          <span className="text-gray-800 font-semibold">
+            Giá và khuyến mãi dự kiến áp dụng đến
+          </span>{" "}
+        </div>
+        <p className="text-red-600 border py-3 ps-2 font-semibold mb-5 mb-lg-0 text-lg">
+          {`${countDown.day.toString().padStart(2, "0")} ngày ${countDown.hour
+            .toString()
+            .padStart(2, "0")} giờ ${countDown.minute
+            .toString()
+            .padStart(2, "0")} phút ${countDown.second
+            .toString()
+            .padStart(2, "0")} giấy`}
+        </p>
+      </div>
     </>
   );
 };

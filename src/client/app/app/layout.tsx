@@ -1,4 +1,5 @@
-import '@/app/ui/global.css';
+import "@/app/ui/global.css";
+import { CartProvider } from "./ui/components/context/cartContext";
 
 export default function RootLayout({
   children,
@@ -6,8 +7,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <CartProvider>
+      <html lang="en">
+        <body>{children}</body>
+      </html>
+    </CartProvider>
   );
 }

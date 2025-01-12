@@ -4,3 +4,27 @@
     color: #000000;
     font-weight: bold; 
 } */
+.image-hover-container {
+    width: 200px; /* Tùy chỉnh kích thước container */
+    height: 200px;
+    overflow: hidden; /* Đảm bảo phần tử không bị tràn ra ngoài */
+  }
+  
+  .image-hover-img {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease; /* Hiệu ứng mờ ảnh */
+  }
+  
+  .image-hover-button {
+    opacity: 0; /* Ẩn nút xóa ban đầu */
+    transition: opacity 0.3s ease; /* Hiệu ứng hiển thị nút */
+  }
+  
+  .image-hover-container:hover .image-hover-img {
+    opacity: 0.5; /* Làm mờ ảnh khi hover */
+  }
+  
+  .image-hover-container:hover .image-hover-button {
+    opacity: 1; /* Hiển thị nút xóa khi hover */
+  }

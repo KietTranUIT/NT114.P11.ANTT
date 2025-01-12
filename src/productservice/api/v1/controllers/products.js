@@ -218,7 +218,8 @@ module.exports.create = async (req, res) => {
         mediaParams.push({ url: uploadResult.secure_url, mType: "video" });
         return;
       }
-      uploadResult = await uploadFileV101(req.files[i].buffer, "products");
+      let buffer = await resizeImage(req.files[i].buffer, 1000, 1000);
+      uploadResult = await uploadFileV101(buffer, "products");
       if (i == 0) {
         mediaParams.push({
           url: uploadResult.secure_url,
@@ -325,7 +326,7 @@ module.exports.create = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error); 
+    console.log(error);
     res.status(500).json(ErrorObj.createInternalError(error.message));
   }
 };
@@ -363,12 +364,21 @@ module.exports.getDetail = async (req, res) => {
       product = await Product.findOne({
         where,
         include: [
+          { model: Brand },
+          { model: Category },
+          {
+            model: Tag,
+            as: "tags_detail",
+            through: {},
+          },
           {
             model: ProductReview,
-            include: [{
+            include: [
+              {
                 model: User,
-                attributes: ["fullName"],
-            }]
+                attributes: ["fullName", "email"],
+              },
+            ],
           },
           {
             model: ProductMedia,
@@ -378,15 +388,17 @@ module.exports.getDetail = async (req, res) => {
             include: [
               {
                 model: VariantAttribute,
-                include: [{
+                include: [
+                  {
                     model: ProductAttribute,
-                    attributes: ['name']
-                }]
+                    attributes: ["name"],
+                  },
+                ],
               },
             ],
           },
         ],
-        order: [[{ model: ProductMedia }, 'id', 'ASC']]
+        order: [[{ model: ProductMedia }, "id", "ASC"]],
       });
       return res.status(200).json({
         type: "product",
@@ -394,7 +406,7 @@ module.exports.getDetail = async (req, res) => {
       });
     } catch (err_db) {
       console.log(err_db);
-      throw err_db
+      throw err_db;
     }
     res.status(200).json({
       type: "product",
@@ -408,8 +420,116 @@ module.exports.getDetail = async (req, res) => {
 // Get products
 module.exports.get = async (req, res) => {
   try {
+    
     //let queries = strongParameters(req.query, getProductsParamsWhiteList)
+    let user;
+    if (req.headers["x-user"] != undefined) {
+      user = JSON.parse(req.headers["x-user"]);
+    }
     let queries = req.query;
+    if (queries.search) {
+      console.log('hello')
+      const products = await Product.findAll({
+        where: {
+          name: {
+            [Op.iLike]: `%${queries.search}%`,
+          },
+        },
+        include: [
+          {
+            model: ProductMedia,
+            where: {
+              isMain: true,
+            },
+          },
+        ],
+      });
+      return res.status(200).json({
+        type: "products",
+        data: products,
+      });
+    }
+    if (queries.list) {
+      let pid = queries.list.split(", ");
+      const products = await Product.findAll({
+        where: {
+          id: {
+            [Op.in]: pid,
+          },
+        },
+        include: [
+          {
+            model: ProductMedia,
+            where: {
+              isMain: true,
+            },
+          },
+          {
+            model: ProductReview,
+          },
+        ],
+      });
+      return res.status(200).json({
+        type: "products",
+        data: products,
+      });
+    }
+    if (queries.view === "top") {
+      let prod_list = await suggested(user);
+      prod_list = prod_list.filter((id) => id != "");
+      const products = await Product.findAll({
+        where: {
+          id: {
+            [Op.in]: prod_list,
+          },
+        },
+        include: [
+          {
+            model: ProductMedia,
+            where: {
+              isMain: true,
+            },
+          },
+          {
+            model: ProductReview,
+          },
+        ],
+      });
+      return res.status(200).json({
+        type: "products",
+        data: products,
+      });
+    }
+
+    if (queries.view === "sale") {
+      const currentTime = new Date();
+
+      let products = await Product.findAll({
+        where: {
+          startSale: {
+            [Op.lte]: currentTime,
+          },
+          endSale: {
+            [Op.gte]: currentTime,
+          },
+        },
+        include: [
+          {
+            model: ProductMedia,
+            where: {
+              isMain: true,
+            },
+          },
+          {
+            model: ProductReview,
+          },
+        ],
+      });
+      return res.status(200).json({
+        type: "products",
+        data: products,
+      });
+    }
 
     // Get total products in database
     if (queries.event === "total") {
@@ -514,6 +634,379 @@ module.exports.review = async (req, res) => {
       type: "product_reviews",
       data: review,
     });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+const maxSuggestions = 30;
+// Get suggested products
+const suggested = async (user) => {
+  let prodIds = [];
+  // Get recommended products for a user
+  if (user) {
+    let usr = await User.findOne({
+      where: {
+        id: user.id,
+      },
+      attributes: ["recommended_products"],
+    });
+    let ids = usr.recommended_products.split(", ");
+    ids.forEach((id) => {
+      if (!prodIds.includes(id) && prodIds.length < maxSuggestions) {
+        prodIds.push(id);
+      }
+    });
+  }
+
+  // user không có sản phaảm đề xuất hoặc user không tồn tại
+  if (prodIds.length === 0) {
+    // Lấy ngẫu nhiên top những sản phẩm từ các danh mục khác nhau
+    let categories = await Category.findAll({
+      order: [["top_products", "DESC"]],
+      limit: 5,
+      attributes: ["top_products"],
+    });
+    let product_list = [];
+    categories.forEach((category) => {
+      product_list = product_list.concat(category.top_products.split(", "));
+    });
+    product_list = product_list.sort(() => Math.random() - 0.5);
+    prodIds =
+      product_list.length > maxSuggestions
+        ? product_list.slice(0, maxSuggestions)
+        : product_list;
+  } else {
+    let categories = await Category.findAll({
+      include: [
+        {
+          model: Product,
+          where: {
+            id: {
+              [Op.in]: prodIds,
+            },
+          },
+          attributes: [],
+        },
+      ],
+      attributes: ["id", "top_products"],
+      group: ["categories.id"],
+    });
+    for (let i = 0; i > categories.length; i++) {
+      if (prodIds.length < maxSuggestions) {
+        let ids = categories[i].top_products.splitt(", ");
+        for (let j = 0; j < ids.length; j++) {
+          if (prodIds > maxSuggestions) {
+            break;
+          }
+          if (!prodIds.includes(ids[j])) {
+            prodIds.push(ids[j]);
+          }
+        }
+      }
+    }
+  }
+  return prodIds;
+};
+
+module.exports.deleteImage = async (req, res) => {
+  try {
+    const { id } = req.body;
+    await ProductMedia.destroy({
+      where: { id },
+    });
+    res.status(201).json({ message: "delete successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+module.exports.uploadImage = async (req, res) => {
+  try {
+    const productId = req.body.product;
+    console.log("product ", productId);
+    console.log("file ", req.body.files);
+    let file_errs = [];
+    req.files.map((file) => {
+      if (!checkFileType(file, ["image", "video"])) {
+        const file_err = new ErrorObj(
+          errorCodes.invalidFile,
+          422,
+          "Invalid file type",
+          `file ${file.originalname} is invalid`,
+          { pointer: "/file" }
+        );
+        file_errs.push(file_err);
+      }
+
+      // Check limit video file
+      if (isVideoFile(file) && file.size > limitVideoSize) {
+        const file_err = new ErrorObj(
+          errorCodes.invalidFile,
+          422,
+          "Invalid file type",
+          `file ${file.originalname} size over 20MB`,
+          { pointer: "/file" }
+        );
+        file_errs.push(file_err);
+      }
+      if (isImageFile(file)) {
+        flag = false;
+      }
+    });
+    if (file_errs.length > 0) {
+      return res.status(422).json({ errors: file_errs });
+    }
+
+    let mediaParams = [];
+    for (let i = 0; i < req.files.length; i++) {
+      let uploadResult;
+      if (isVideoFile(req.files[i])) {
+        uploadResult = await uploadVideoBuffer(req.files[i].buffer, "products");
+        if (uploadResult instanceof Error) {
+          throw new Error(uploadResult.message);
+        }
+        mediaParams.push({ url: uploadResult.secure_url, mType: "video" });
+        return;
+      }
+      let buffer = await resizeImage(req.files[i].buffer, 1000, 1000);
+      uploadResult = await uploadFileV101(buffer, "products");
+      if (i == 0) {
+        mediaParams.push({
+          productId,
+          url: uploadResult.secure_url,
+          mType: "image",
+          isMain: false,
+        });
+      } else {
+        mediaParams.push({ url: uploadResult.secure_url, mType: "image" });
+      }
+    }
+    const medias = await ProductMedia.bulkCreate(mediaParams);
+    res.status(201).json({ type: "media", data: medias });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+module.exports.update = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    let data = strongParameters(req.body, [
+      "name",
+      "slug",
+      "description",
+      "brandId",
+      "categoryId",
+      "regularPrice",
+      "stock",
+      "tags",
+      "tag_type",
+      "type_discount",
+      "discount",
+      "startSale",
+      "endSale",
+    ]);
+    if (data.type_discount) {
+      await Product.update(data, { where: { id: productId } });
+      let product = await Product.findOne({
+        where: {
+          id: productId,
+        },
+        include: [
+          { model: Brand },
+          { model: Category },
+          {
+            model: Tag,
+            as: "tags_detail",
+            through: {},
+          },
+          {
+            model: ProductReview,
+            include: [
+              {
+                model: User,
+                attributes: ["fullName", "email"],
+              },
+            ],
+          },
+          {
+            model: ProductMedia,
+          },
+          {
+            model: ProductVariant,
+            include: [
+              {
+                model: VariantAttribute,
+                include: [
+                  {
+                    model: ProductAttribute,
+                    attributes: ["name"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        order: [[{ model: ProductMedia }, "id", "ASC"]],
+      });
+      return res.status(200).json({
+        type: "product",
+        data: product,
+      });
+    }
+    if (data.tags) {
+      if (data.tag_type === "add") {
+        await ProductTag.bulkCreate(data.tags);
+      } else {
+        await ProductTag.destroy({
+          where: {
+            id: data.tags,
+          },
+        });
+      }
+      let product = await Product.findOne({
+        where: {
+          id: productId,
+        },
+        include: [
+          { model: Brand },
+          { model: Category },
+          {
+            model: Tag,
+            as: "tags_detail",
+            through: {},
+          },
+          {
+            model: ProductReview,
+            include: [
+              {
+                model: User,
+                attributes: ["fullName", "email"],
+              },
+            ],
+          },
+          {
+            model: ProductMedia,
+          },
+          {
+            model: ProductVariant,
+            include: [
+              {
+                model: VariantAttribute,
+                include: [
+                  {
+                    model: ProductAttribute,
+                    attributes: ["name"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        order: [[{ model: ProductMedia }, "id", "ASC"]],
+      });
+      return res.status(200).json({
+        type: "product",
+        data: product,
+      });
+    }
+
+    let result;
+    try {
+      result = await Product.update(data, {
+        where: { id: productId },
+        returning: true,
+      });
+    } catch (err_db) {
+      if (err_db.name === "SequelizeUniqueConstraintError") {
+        if (err_db.errors[0].path === "slug") {
+          err = new ErrorObj(
+            errorCodes.duplicateEntry,
+            422,
+            "Duplicate record",
+            "duplicate slug product.",
+            { pointer: "/slug" }
+          );
+        } else {
+          err = new ErrorObj(
+            errorCodes.duplicateEntry,
+            422,
+            "Duplicate entry",
+            "duplicate name product.",
+            { pointer: "/name" }
+          );
+        }
+        return res.status(422).json({ errors: [err] });
+      }
+      throw err_db;
+    }
+    let product = await Product.findOne({
+      where: {
+        id: result[1][0].id,
+      },
+      include: [
+        { model: Brand },
+        { model: Category },
+        {
+          model: Tag,
+          as: "tags_detail",
+          through: {},
+        },
+        {
+          model: ProductReview,
+          include: [
+            {
+              model: User,
+              attributes: ["fullName", "email"],
+            },
+          ],
+        },
+        {
+          model: ProductMedia,
+        },
+        {
+          model: ProductVariant,
+          include: [
+            {
+              model: VariantAttribute,
+              include: [
+                {
+                  model: ProductAttribute,
+                  attributes: ["name"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: [[{ model: ProductMedia }, "id", "ASC"]],
+    });
+    return res.status(200).json({
+      type: "product",
+      data: product,
+    });
+  } catch (error) {
+    res.status(500).json(ErrorObj.createInternalError(error.message));
+  }
+};
+
+module.exports.getReviews = async (req, res) => {
+  try {
+    const now = new Date();
+    const time_condition = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const reviews = await ProductReview.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: time_condition
+        }
+      },
+      include: [{ model: Product, attributes: ['name']}, { model: User, attributes: ['email']}]
+    });
+    res.status(200).json({ type: 'reviews', data: reviews });
   } catch (error) {
     console.log(error);
     res.status(500).json(ErrorObj.createInternalError(error.message));

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Modal from "./components/modal/modal";
-import { login } from "../lib/helps";
+import { login, saveToLocalStorage } from "../lib/helps";
 
 const LoginForm = () => {
   // Is login fail
@@ -32,17 +32,21 @@ const LoginForm = () => {
       });
       return;
     }
-    const authorization = httpRes.headers["authorization"];
+    const authorization = httpRes.data.token;
     let [tokenStr1, tokenStr2] = authorization.split(";");
     let accessToken = tokenStr1.split("=")[1];
     let refreshToken = tokenStr2.split("=")[1];
 
-    localStorage.setItem('access_token', accessToken)
-    localStorage.setItem('user', JSON.stringify(httpRes.data.data))
+    // localStorage.setItem('access_token', accessToken)
+    saveToLocalStorage('access_token', accessToken, 60*60*1000)
+    // localStorage.setItem('user', JSON.stringify(httpRes.data.data))
+    saveToLocalStorage('user', httpRes.data.data, 60 * 60 * 1000)
+    saveToLocalStorage('cart', httpRes.data.cart, 60 * 60 * 1000)
 
     const date = new Date();
     date.setTime(date.getTime() + 1 * 60 * 60 * 1000);
     document.cookie = `refresh_token=${refreshToken}; expires=${date.toUTCString()}; path=/; SameSite=Strict`;
+    document.cookie = `bearer=${accessToken}; expires=${date.toUTCString()}; path=/; SameSite=Strict`;
     window.location.href = "/"
   };
   return (
@@ -103,6 +107,7 @@ const LoginForm = () => {
           </button>
         </div>
       </form>
+  
     </>
   );
 };

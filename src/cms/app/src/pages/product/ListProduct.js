@@ -10,6 +10,7 @@ import {
   getTotalBrands,
   getProducts,
   formatToVNDCustom,
+  formatDateTime
 } from "./../../helpers";
 import { useNavigate } from "react-router-dom";
 import { debounce, set } from "lodash";
@@ -23,18 +24,20 @@ import { FormControl, FormLabel, Button, Chip } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import Input from "@mui/joy/Input";
 import DetailProduct from "./DetailProduct";
+
 function ListProducts() {
   const [brands, setBrands] = useState([[]]);
-  const [products, setProducts] = useState([[]]);
+  const [products, setProducts] = useState([]);
   const [page, setPage] = useState("product");
   const [searchResult, setSearchResult] = useState([]);
+  const [count, setCount] = useState(0);
   const [pagination, setPagination] = useState({
     totalCount: 0,
     siblingCount: 1,
     currentPage: 1,
     pageSize: 20,
   });
-  const [indexBrand, setIndexBrand] = useState(0);
+  const [indexProduct, setIndexProduct] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({
@@ -43,6 +46,14 @@ function ListProducts() {
     message: "",
   });
   let paginationRange = usePagination(pagination);
+
+  const handleClickOutside = () => {
+    let dropdown = document.getElementById("dropdown");
+    if (dropdown == null) {
+      return;
+    }
+    dropdown.classList.add("d-none");
+  };
 
   // Loading list brands access page
   useEffect(() => {
@@ -66,11 +77,13 @@ function ListProducts() {
           brand: "id,name",
         },
       });
+      setProducts(result.data);
+      // console.log(result);
       initProducts[pagination.currentPage - 1] = result.data;
       return initProducts;
     };
     fetchProducts().then((data) => {
-      setProducts(data);
+      // setProducts(data);
       setIsLoading(false);
     });
   }, []);
@@ -83,7 +96,7 @@ function ListProducts() {
   // Handle click on edit category
   const handleEditProduct = (event) => {
     const productId = event.currentTarget.dataset.id;
-    setIndexBrand(productId);
+    setIndexProduct(productId);
     setPage("detailproduct");
   };
 
@@ -159,7 +172,11 @@ function ListProducts() {
   };
 
   const handleSearch = async (query) => {
-    const result = await searchBrand(query);
+    if (query === "") {
+      query = "~";
+    }
+    const result = await getProducts({ search: query });
+
     if (!(result instanceof Error)) {
       if (result.data.length <= 0) {
         setSearchResult([]);
@@ -173,25 +190,32 @@ function ListProducts() {
 
   // Search category
   const handleSearchChange = (event) => {
-    const dropdown = document.getElementById("dropdown-element");
+    const dropdown = document.getElementById("dropdown");
     dropdown.classList.remove("d-none");
+
     debouncedSearch(event.target.value);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await getProducts({
+        page: pagination.currentPage,
+        limit: pagination.pageSize,
+        include: "media,category,brand,tags",
+        field: {
+          media: "id,url,isMain",
+          category: "id,name",
+          brand: "id,name",
+        },
+      });
+      setProducts(result.data);
+    };
+    fetchData()
+  }, [pagination]);
 
   // Handle on change page
   const handleChangePage = async (event) => {
     const pageNumber = parseInt(event.currentTarget.dataset.page);
-    if (brands[pageNumber - 1].length == 0) {
-      // Fetch brands
-      const result = await getBrands({
-        page: pageNumber,
-        limit: pagination.pageSize,
-      });
-      let copyBrands = brands;
-      copyBrands[pageNumber - 1] = result.data;
-      setBrands((brds) => copyBrands);
-    }
-
     setPagination({ ...pagination, currentPage: pageNumber });
   };
 
@@ -210,17 +234,6 @@ function ListProducts() {
     if (pageNumber <= 0) {
       return;
     }
-
-    if (brands[pageNumber - 1].length == 0) {
-      // Fetch brands
-      const result = await getBrands({
-        page: pageNumber,
-        limit: pagination.pageSize,
-      });
-      let copyBrands = brands;
-      copyBrands[pageNumber - 1] = result.data;
-      setBrands((brds) => copyBrands);
-    }
     setPagination({ ...pagination, currentPage: pageNumber });
   };
 
@@ -232,17 +245,6 @@ function ListProducts() {
     const pageNumber = pagination.currentPage + 1;
     if (pageNumber > totalPageNumbers) {
       return;
-    }
-
-    if (brands[pageNumber - 1].length == 0) {
-      // Fetch brands
-      const result = await getBrands({
-        page: pageNumber,
-        limit: pagination.pageSize,
-      });
-      let copyBrands = brands;
-      copyBrands[pageNumber - 1] = result.data;
-      setBrands((brds) => copyBrands);
     }
     setPagination({ ...pagination, currentPage: pageNumber });
   };
@@ -269,13 +271,17 @@ function ListProducts() {
         {!(page === "product") ? (
           <>
             <Backpage handleOnBack={() => setPage("product")} />
-            {page === "addproduct" ? <AddProduct /> : <DetailProduct />}
+            {page === "addproduct" ? (
+              <AddProduct />
+            ) : (
+              <DetailProduct productId={indexProduct} />
+            )}
           </>
         ) : (
           <>
             <div className="mb-5">
               <div className="mb-4">
-                <h2 className="fw-bold" style={{ color: "#007bff" }}>
+                <h2 className="fw-bold" style={{ color: "black" }}>
                   Sản phẩm
                 </h2>
               </div>
@@ -322,37 +328,113 @@ function ListProducts() {
                       </form>
                     </div> */}
                     <div className="d-flex gap-3">
-                      <FormControl>
-                        <FormLabel>Search</FormLabel>
-                        <Input
-                          placeholder="Tìm kiếm sản phẩm"
-                          startDecorator={<SearchIcon />}
-                        />
-                      </FormControl>
-                      <FormControl>
-                        <FormLabel>Status</FormLabel>
-                        <Autocomplete
-                          placeholder="Filter by status"
-                          options={["option1", "option2"]}
-                          sx={{ width: 150 }}
-                        />
-                      </FormControl>
-                      <FormControl>
-                        <FormLabel>Category</FormLabel>
-                        <Autocomplete
-                          placeholder="All"
-                          options={["option1", "option2"]}
-                          sx={{ width: 150 }}
-                        />
-                      </FormControl>
-                      <FormControl>
-                        <FormLabel>Brand</FormLabel>
-                        <Autocomplete
-                          placeholder="All"
-                          options={["option1", "option2"]}
-                          sx={{ width: 150 }}
-                        />
-                      </FormControl>
+                      <div className="d-flex gap-3">
+                        <FormControl style={{ width: "700px" }}>
+                          <FormLabel></FormLabel>
+                          <Input
+                            className="p-2 bg-white"
+                            placeholder="Tìm kiếm sản phẩm..."
+                            startDecorator={<SearchIcon />}
+                            onChange={handleSearchChange}
+                          />
+                        </FormControl>
+                      </div>
+                    </div>
+                    <div
+                      id="dropdown"
+                      className="hidden d-none bg-white divide-y divide-gray-100 rounded-lg shadow w-[500px]"
+                      style={{
+                        position: "absolute",
+                        zIndex: 10,
+                        marginTop: "43px",
+                        width: "500px",
+                      }}
+                    >
+                      <ul
+                        className="py-2 text-sm text-gray-700 list-unstyled"
+                        aria-labelledby="dropdownDefaultButton"
+                      >
+                        <li
+                          className="px-4 py-2 bg-orange-400 text-white font-semibold flex justify-between"
+                          style={{ backgroundColor: "#d1d5db", color: "black" }}
+                          onClick={handleClickOutside}
+                        >
+                          {" "}
+                          <span style={{ color: "black" }}>Sản phẩm gợi ý</span>
+                        </li>
+                        {searchResult.length === 0 ? (
+                          <li className="px-3 pt-3">Không tìm thấy sản phẩm</li>
+                        ) : (
+                          <>
+                            {searchResult.map((product, index) => {
+                              return (
+                                <li key={index}>
+                                  <a
+                                    href={`/products/${product.slug}`}
+                                    className="d-flex gap-5 align-items-center block px-4 py-2 hover:bg-gray-100"
+                                  >
+                                    <img
+                                      src={product.product_medias[0].url}
+                                      width="80"
+                                      height="80"
+                                    />
+                                    <div>
+                                      <h3
+                                        className="text-sm line-clamp-2"
+                                        style={{ fontSize: "14px" }}
+                                      >
+                                        {product.name}
+                                      </h3>
+                                      {product.startSale != null &&
+                                      product.endSale != null &&
+                                      new Date() >
+                                        new Date(product.startSale) &&
+                                      new Date() < new Date(product.endSale) ? (
+                                        <>
+                                          <h3 className="text-red-500 mb-0 text-sm">
+                                            {/* {product.type_discount === "percent"
+                                              ? formatMoney(
+                                                  product.regularPrice -
+                                                    (product.regularPrice *
+                                                      product.discount) /
+                                                      100
+                                                )
+                                              : formatMoney(
+                                                  product.regularPrice -
+                                                    product.discount
+                                                )} */}
+                                          </h3>
+                                          <div className="flex gap-1">
+                                            <p className="me-2 mb-0 line-through text-gray-500">
+                                              {/* {formatMoney(
+                                                product.regularPrice
+                                              )} */}
+                                            </p>
+                                            <span className="text-red-500">
+                                              {/* {product.type_discount ===
+                                              "percent"
+                                                ? `-${product.discount}%`
+                                                : `-${formatMoney(
+                                                    product.discount
+                                                  )}`} */}
+                                            </span>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <h3 className="text-red-600 mb-0 text-sm">
+                                            {/* {formatMoney(product.regularPrice)} */}
+                                          </h3>
+                                        </>
+                                      )}
+                                    </div>
+                                  </a>
+                                </li>
+                              );
+                            })}
+                          </>
+                        )}
+                      </ul>
                     </div>
                     <div className="d-flex gap-2">
                       <button
@@ -463,10 +545,9 @@ function ListProducts() {
                             style={{ width: "150px" }}
                             data-sort="brand"
                           >
-                            Product Name
+                            Tên sản phẩm
                             <a
                               onClick={(event) => {
-                                console.log(brands);
                                 event.preventDefault();
                                 let copy = brands;
                                 copy[pagination.currentPage - 1].sort((a, b) =>
@@ -494,7 +575,7 @@ function ListProducts() {
                             data-sort="price"
                             style={{ width: "120px" }}
                           >
-                            Price
+                            Giá
                           </th>
                           <th
                             className="sort text-start"
@@ -502,7 +583,7 @@ function ListProducts() {
                             data-sort="price"
                             style={{ width: "120px" }}
                           >
-                            Category
+                            Danh mục
                           </th>
                           <th
                             className="sort text-start"
@@ -510,7 +591,7 @@ function ListProducts() {
                             data-sort="price"
                             style={{ width: "120px" }}
                           >
-                            Brand
+                            Thương hiệu
                           </th>
                           <th
                             className="sort text-start"
@@ -524,7 +605,7 @@ function ListProducts() {
                             scope="col"
                             style={{ width: "130px" }}
                           >
-                            Published On
+                            Ngày tạo
                           </th>
                           <th
                             className="sort text-end align-middle pe-0 ps-4"
@@ -533,123 +614,115 @@ function ListProducts() {
                         </tr>
                       </thead>
                       <tbody className="list" id="products-table-body">
-                        {products[pagination.currentPage - 1].map(
-                          (product, index) => (
-                            <tr className="position-static">
-                              <td className="fs-9 align-middle">
-                                <div className="form-check mb-0 fs-8">
-                                  <input
-                                    value={product.id}
-                                    className="form-check-input select-remove-input"
-                                    type="checkbox"
-                                  />
-                                </div>
-                              </td>
-                              <td className="product align-middle ps-4">
-                                <img
-                                  className="p-2 border"
-                                  src={product.product_medias.map(
-                                    (media_item) => {
-                                      if (media_item.isMain == true) {
-                                        return media_item.url;
-                                      }
-                                    }
-                                  )}
-                                  alt="error!"
-                                  width="90px"
-                                  height="90px"
-                                ></img>
-                              </td>
-                              <td className="product align-middle ps-1">
-                                <a
-                                  className="fw-semibold line-clamp-3 mb-0"
-                                  href="../../../apps/e-commerce/landing/product-details.html"
-                                >
-                                  {product.name}
-                                </a>
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary pe-4 text-end">
-                                {formatToVNDCustom(product.regularPrice)}
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary text-start">
-                                {product.category === null ? (
-                                  <></>
-                                ) : (
-                                  product.category.name
-                                )}
-                              </td>
-                              <td className="align-middle white-space-nowrap text-body-quaternary text-start">
-                                {product.brand === null ? (
-                                  <></>
-                                ) : (
-                                  product.brand.name
-                                )}
-                              </td>
-                              <td className="text-body-quaternary text-start pt-4">
-                                <div className="d-flex gap-2 flex-wrap">
-                                  {product.tags_detail.map((tag) => {
-                                    return (
-                                      <div
-                                        className="tag-items d-flex align-items-center p-1 gap-1"
-                                        style={{
-                                          backgroundColor: "#c7c7c7",
-                                          borderRadius: "5px",
-                                        }}
+                        {products.map((product, index) => (
+                          <tr className="position-static">
+                            <td className="fs-9 align-middle">
+                              <div className="form-check mb-0 fs-8">
+                                <input
+                                  value={product.id}
+                                  className="form-check-input select-remove-input"
+                                  type="checkbox"
+                                />
+                              </div>
+                            </td>
+                            <td className="product align-middle ps-4">
+                              <img
+                                className="p-2 border"
+                                src={product.product_medias[0].url}
+                                alt="error!"
+                                width="90px"
+                                height="90px"
+                              ></img>
+                            </td>
+                            <td className="product align-middle ps-1">
+                              <a
+                                className="fw-semibold line-clamp-3 mb-0"
+                                href="../../../apps/e-commerce/landing/product-details.html"
+                              >
+                                {product.name}
+                              </a>
+                            </td>
+                            <td className="align-middle white-space-nowrap text-body-quaternary pe-4 text-end">
+                              {formatToVNDCustom(product.regularPrice)}
+                            </td>
+                            <td className="align-middle white-space-nowrap text-body-quaternary text-start">
+                              {product.category === null ? (
+                                <></>
+                              ) : (
+                                product.category.name
+                              )}
+                            </td>
+                            <td className="align-middle white-space-nowrap text-body-quaternary text-start">
+                              {product.brand === null ? (
+                                <></>
+                              ) : (
+                                product.brand.name
+                              )}
+                            </td>
+                            <td className="text-body-quaternary text-start pt-4">
+                              <div className="d-flex gap-2 flex-wrap">
+                                {product.tags_detail.map((tag) => {
+                                  return (
+                                    <div
+                                      className="tag-items d-flex align-items-center p-1 gap-1"
+                                      style={{
+                                        backgroundColor: "#c7c7c7",
+                                        borderRadius: "5px",
+                                      }}
+                                    >
+                                      <span
+                                        className="badge badge-primary fw-semibold"
+                                        style={{ color: "black" }}
                                       >
-                                        <span
-                                          className="badge badge-primary fw-semibold"
-                                          style={{ color: "black" }}
-                                        >
-                                          { tag.name }
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </td>
-                              <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 text-end">
-                                {formatTimeStamp(product.createdAt)}
-                              </td>
-                              <td>
-                                <div className="d-flex gap-2 justify-content-center m-3">
-                                  <button
-                                    className="btn btn-primary"
-                                    data-id={product.id}
-                                    onClick={handleEditProduct}
+                                        {tag.name}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </td>
+                            <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 text-end">
+                              {formatDateTime(product.createdAt)}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2 justify-content-center m-3">
+                                <button
+                                  className="btn btn-primary"
+                                  data-id={product.id}
+                                  onClick={handleEditProduct}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    class="bi bi-pen"
+                                    viewBox="0 0 16 16"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      class="bi bi-pen"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    className="btn btn-danger"
-                                    // data-id={item.id}
-                                    // onClick={handleRemoveBrand}
+                                    <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  className="btn btn-danger"
+                                  // data-id={item.id}
+                                  // onClick={handleRemoveBrand}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    class="bi bi-trash"
+                                    viewBox="0 0 16 16"
                                   >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="16"
-                                      height="16"
-                                      fill="currentColor"
-                                      class="bi bi-trash"
-                                      viewBox="0 0 16 16"
-                                    >
-                                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        )}
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -659,12 +732,12 @@ function ListProducts() {
                         className="mb-0 d-none d-sm-block me-3 fw-semibold text-body"
                         data-list-info="data-list-info"
                       >
-                        {(pagination.currentPage - 1) * pagination.pageSize + 1}{" "}
-                        to {brands[pagination.currentPage - 1].length}{" "}
-                        <span style={{ color: "gray", fontSize: "11px" }}>
-                          Items of
+                        {/* {(pagination.currentPage - 1) * pagination.pageSize + 1}{" "}
+                        to {products[pagination.currentPage - 1].length}{" "} */}
+                        {/* <span style={{ color: "gray", fontSize: "11px" }}>
+                          Tổng
                         </span>{" "}
-                        {pagination.totalCount}
+                        {pagination.totalCount} */}
                       </p>
                     </div>
                     <div className="col-auto d-flex gap-2">

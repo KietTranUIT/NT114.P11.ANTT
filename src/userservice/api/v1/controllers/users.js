@@ -18,7 +18,9 @@ const errorObj = require("../models/errors");
 const errorCodes = require("../../../config/errors");
 const axios = require("axios");
 const key = require("../../../config/key");
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require('google-auth-library');
+const Cart = require("../models/carts");
+const CartItem = require("../models/cart_items");
 
 const oauth2Client = new OAuth2Client(key.google.clientId, key.google.clientSecret, key.google.callBackURL);
 
@@ -26,6 +28,20 @@ module.exports.defaultRoute = async (req, res) => {
   //const users = await User.findAll({include: Role});
   res.status(200).json("Message Hello");
 };
+
+// Xác thực token có phải là admin hay không
+module.exports.validateTokenAdmin = async (req, res) => {
+  try {
+    const { token } = req.query
+    const user = verifyJWT(token, 'access_token')
+    if (user.roleId != 1) {
+      return res.status(402).json({ message: 'Permission denied' });
+    }
+    res.status(200).json({ message: 'Allowed' })
+  } catch (error) {
+    res.status(500).json(errorObj.createInternalError(error.message));
+  }
+}
 
 // Register account for customer
 module.exports.register = async (req, res) => {
@@ -128,13 +144,14 @@ module.exports.register = async (req, res) => {
     }
 
     // Send mail welcome to user
-    await axios.post(`http://localhost:${key.services.jobService}/job`, {
-      type: "send mail welcome",
-      data: {
-        email: params.email,
-        fullName: params.fullName,
-      },
-    });
+    // await axios.post(`http://localhost:${key.services.jobService}/job`, {
+    //   type: "send mail welcome",
+    //   data: {
+    //     email: params.email,
+    //     fullName: params.fullName,
+    //   },
+    // });
+    await Cart.create({ userId: user.id})
 
     // Hide password of user
     user.password = undefined;
@@ -237,21 +254,31 @@ module.exports.login = async (req, res) => {
       email: user.email,
       roleId: user.roleId,
     };
+    // Get cart of user
+    const cart = await Cart.findOne({
+      where: { userId: user.id, status: "active" },
+      include: [{
+        model: CartItem,
+      }]
+    })
 
     // Grant token
     const accessToken = generateJWT(payload, "24h", "access_token"); // Access token expires in 1 hour
     const refreshToken = generateJWT(payload, "24h", "refresh_token"); // Refresh token expires in 24 hours
 
     const resToken = `access_token=${accessToken};refresh_token=${refreshToken}`;
-    res.setHeader("Authorization", resToken);
+    // res.setHeader("Authorization", resToken);
     user.password = undefined;
     res.status(200).json({
       type: "user",
       data: {
         ...user.dataValues,
       },
+      cart,
+      token: resToken,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json(errorObj.createInternalError(error.message));
   }
 };

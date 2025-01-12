@@ -43,6 +43,25 @@ const LineChartV1 = () => {
   const options = {
     responsive: true,
     plugins: {
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (tooltipItems) => {
+            // Tùy chỉnh tiêu đề tooltip
+            return `Month: ${tooltipItems[0].label}`;
+          },
+          label: (tooltipItem) => {
+            // Xử lý dữ liệu trước khi hiển thị
+            const originalValue = tooltipItem.raw; // Giá trị gốc
+            const processedValue = originalValue * 2; // Ví dụ: Nhân đôi giá trị
+            return `Processed Value: ${processedValue}`;
+          },
+          footer: (tooltipItems) => {
+            // Thêm nội dung ở phần footer của tooltip
+            return "Custom Footer Text";
+          },
+        },
+      },
       legend: {
         position: "top",
       },

@@ -38,7 +38,7 @@ var Order = sequelize.define('orders', {
         allowNull: false,
     },
     status: {
-        type: DataTypes.ENUM(['pending', 'confirmed', 'completed', 'cancelled', 'returned']),
+        type: DataTypes.ENUM(['pending', 'confirmed','shipping', 'shipped', 'completed', 'cancelled', 'returned']),
         defaultValue: 'pending',
     },
     paymentMethod: {
@@ -48,6 +48,26 @@ var Order = sequelize.define('orders', {
     paid: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
+    },
+    shippingMethod: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1
+    },
+    confirmedAt: {
+        type: DataTypes.TIME,
+        defaultValue: null,
+    },
+    shippedAt: {
+        type: DataTypes.TIME,
+        defaultValue: null
+    },
+    completedAt: {
+        type: DataTypes.TIME,
+        defaultValue: null
+    },
+    cancelledAt: {
+        type: DataTypes.TIME,
+        defaultValue: null
     }
 }, {
     underscored: true,
@@ -59,5 +79,7 @@ Cart.hasOne(Order, {
 });
 
 Order.belongsTo(Cart)
+
+
 
 module.exports = Order;
